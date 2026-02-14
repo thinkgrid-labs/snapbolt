@@ -140,14 +140,14 @@ We are committed to making `@think-grid-labs/opti-assets` the gold standard for 
 - [ ] **Automatic Quality**: Content-aware optimization that keeps text sharp while compressing textures harder.
 
 ### 🟡 Mid-Term (Feature Expansion)
-- [ ] **AVIF Encoding**: Implementation of AVIF for even better compression ratios (once Rust AVIF encoders are WASM-ready).
-- [ ] **Smart Cropping**: AI-powered saliency detection to ensure the most important part of the book/image is always centered.
+- [ ] **AVIF Encoding**: Implementation of AVIF for even better compression ratios.
+- [ ] **Smart Cropping**: AI-powered saliency detection to ensure the most important part of the subject is always centered.
 - [ ] **Web Worker Orchestration**: Offload processing to background threads automatically to keep the UI at 60fps.
 
 ### 🔴 Long-Term (Ecosystem)
 - [ ] **Plugin System**: Watermarking, custom filters, and edge-function templates.
 - [ ] **Framework Natives**: Deep integration with Next.js Server Components and Vite build-time hooks.
-- [ ] **Edge Deployment**: Pre-built templates for Cloudflare Workers and Vercel Edge using the same Rust core.
+- [ ] **Edge Deployment**: Pre-built templates for Cloudflare Workers and Vercel Edge.
 
 ---
 
