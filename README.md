@@ -11,6 +11,15 @@ This toolkit provides professional-grade image optimization (resizing and JPEG/W
 
 ---
 
+## ⚡ Performance & Benefits
+
+- **Butter-Smooth Scrolling**: By shrinking images to the exact size needed in the UI, we drastically reduce browser RAM usage, preventing "jank" and crashes on mobile devices.
+- **Ultra-Fast Uploads**: Optimize images *before* they leave the user's device. Reduces bandwidth consumption and speeds up upload times by up to 90%.
+- **Zero Server Overhead**: Shift the heavy lifting of image processing to the client side. No more expensive cloud-functions for basic resizing.
+- **Privacy First**: Process sensitive images locally without ever sending unoptimized high-res data to your servers.
+
+---
+
 ## 1. Library Installation & Set-Up
 
 ### Installation
@@ -88,7 +97,6 @@ Synchronize the required WASM binaries to your web project:
 ```bash
 npx @think-grid-labs/opti-assets-cli sync ./public
 ```
-
 ---
 
 ## License
