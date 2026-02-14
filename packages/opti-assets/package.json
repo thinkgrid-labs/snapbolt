@@ -28,10 +28,12 @@
         "test": "vitest"
     },
     "keywords": [
+        "react",
+        "react-component",
+        "nextjs",
+        "nextjs-component",
         "image-optimization",
         "wasm",
-        "react",
-        "rust",
         "webp"
     ],
     "author": "DennisP <dennis@thinkgrid-labs.com>",
