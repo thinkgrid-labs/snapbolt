@@ -1,71 +1,95 @@
 # @think-grid-labs/opti-assets
 
-A high-performance image optimization toolkit powered by Rust and WebAssembly.
+A high-performance image optimization toolkit.
 
-## Packages
-- **`@think-grid-labs/opti-assets`**: Unified library for browser and React apps.
-- **`@think-grid-labs/opti-assets-cli`**: Native CLI for bulk build-time optimization.
+## Overview
+This toolkit provides professional-grade image optimization (resizing and JPEG/WebP encoding) that runs entirely on the client side or in a native build-time environment.
+
+### Packages
+- **`@think-grid-labs/opti-assets`**: The core library containing React hooks and WASM bindings.
+- **`@think-grid-labs/opti-assets-cli`**: Native CLI for bulk optimization and WASM asset synchronization.
 
 ---
 
-## 1. Library: @think-grid-labs/opti-assets
-Client-side optimization with React support.
+## 1. Library Installation & Set-Up
 
 ### Installation
 ```bash
 npm install @think-grid-labs/opti-assets
 ```
 
-### Usage (React)
+### Essential Step: WASM Synchronization
+Because WASM binaries are served as separate files, you must ensure the `.wasm` file is available in your project's `public` (or static) folder so the browser can download it.
+
+#### Option A: Automated (Recommended)
+Use our CLI to automatically find and copy the binary from `node_modules` to your target directory:
+```bash
+npx @think-grid-labs/opti-assets-cli sync ./public
+```
+*Tip: Add this to your `postinstall` script in `package.json` to keep it synchronized automatically.*
+
+#### Option B: Manual
+If you prefer not to use the CLI, manually copy the file:
+- **Source**: `node_modules/@think-grid-labs/opti-assets/pkg/opti_assets_bg.wasm`
+- **Destination**: `your-project/public/opti_assets_bg.wasm`
+
+---
+
+## 2. Usage Examples
+
+### React Hook
+The simplest way to optimize images on the fly. Pass a URL or a Blob.
+
 ```tsx
 import { useImageOptimizer } from '@think-grid-labs/opti-assets';
 
-const MyComponent = ({ src }) => {
-  const { optimizedUrl, loading } = useImageOptimizer(src, 75, 300);
+const SmartImage = ({ src }) => {
+  // src can be a URL string or a File/Blob
+  // quality: 0-100 (default: 75)
+  // maxWidth: target width in pixels (default: 300)
+  const { optimizedUrl, loading, error } = useImageOptimizer(src, 75, 300);
+
+  if (loading) return <div className="spinner" />;
+  
   return <img src={optimizedUrl || src} alt="Optimized" />;
 };
 ```
 
-### Usage (Vanilla JS / Browser)
+### Vanilla JS / Browser
+For custom integrations or non-React environments.
+
 ```ts
 import init, { optimize_image_sync } from '@think-grid-labs/opti-assets/browser';
 
-// 1. First, sync the WASM binary to your public folder:
-// npx @think-grid-labs/opti-assets-cli sync ./public
-
-// 2. Then initialize and use:
-// await init('/opti_assets_bg.wasm'); 
-// const optimized = optimize_image_sync(inputBytes, 75, 300);
+async function optimize(bytes) {
+  // Ensure the WASM is initialized (path relative to your public root)
+  await init('/opti_assets_bg.wasm'); 
+  
+  // Optimize: returns a Uint8Array
+  const optimizedData = optimize_image_sync(bytes, 75, 300);
+  
+  return new Blob([optimizedData], { type: 'image/jpeg' });
+}
 ```
 
 ---
 
-## 2. CLI: @think-grid-labs/opti-assets-cli
-Native tool for high-speed local image processing and asset management.
+## 3. CLI: @think-grid-labs/opti-assets-cli
+Native tool for high-speed local image processing.
 
-### Installation
+### Bulk Optimize
+Recursively scan and shrink images in your local `public` folder before deployment:
 ```bash
-npm install -g @think-grid-labs/opti-assets-cli
+npx @think-grid-labs/opti-assets-cli scan ./public
 ```
 
-### Usage
-
-#### Optimize Images (Scan)
-Recursively optimize images in a directory:
+### Sync Assets
+Synchronize the required WASM binaries to your web project:
 ```bash
-opti-assets-cli scan ./public
+npx @think-grid-labs/opti-assets-cli sync ./public
 ```
 
-#### Sync WASM (Sync)
-Automatically copy the WASM binary from `node_modules` to your project's public folder:
-```bash
-opti-assets-cli sync ./public
-```
-
-## Development
-This is a Rust + Node.js monorepo. 
-- Core Logic: `packages/core`
-- Build all: `npm run build`
+---
 
 ## License
 MIT
