@@ -1,13 +1,14 @@
 {
     "name": "@think-grid-labs/opti-assets",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "description": "Unified image optimization toolkit for the browser and React",
     "main": "./dist/index.js",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "files": [
         "dist",
-        "pkg"
+        "pkg",
+        "README.md"
     ],
     "exports": {
         ".": {
