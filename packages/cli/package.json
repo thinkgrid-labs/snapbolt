@@ -1,6 +1,6 @@
 {
     "name": "@think-grid-labs/opti-assets-cli",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "main": "index.js",
     "types": "index.d.ts",
     "napi": {
@@ -43,12 +43,13 @@
         "registry": "https://registry.npmjs.org/"
     },
     "bin": {
-        "opti-assets-cli": "./index.js"
+        "opti-assets-cli": "./bin/cli.js"
     },
     "files": [
         "index.js",
         "index.d.ts",
-        "*.node"
+        "*.node",
+        "bin"
     ],
     "engines": {
         "node": ">= 10"

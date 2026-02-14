@@ -26,16 +26,22 @@ const MyComponent = ({ src }) => {
 };
 ```
 
-### Usage (Vanilla JS)
+### Usage (Vanilla JS / Browser)
 ```ts
 import init, { optimize_image_sync } from '@think-grid-labs/opti-assets/browser';
-// ... await init(); optimize_image_sync(bytes, quality, width);
+
+// 1. First, sync the WASM binary to your public folder:
+// npx @think-grid-labs/opti-assets-cli sync ./public
+
+// 2. Then initialize and use:
+// await init('/opti_assets_bg.wasm'); 
+// const optimized = optimize_image_sync(inputBytes, 75, 300);
 ```
 
 ---
 
 ## 2. CLI: @think-grid-labs/opti-assets-cli
-Native tool for high-speed local image processing.
+Native tool for high-speed local image processing and asset management.
 
 ### Installation
 ```bash
@@ -43,8 +49,17 @@ npm install -g @think-grid-labs/opti-assets-cli
 ```
 
 ### Usage
+
+#### Optimize Images (Scan)
+Recursively optimize images in a directory:
 ```bash
 opti-assets-cli scan ./public
+```
+
+#### Sync WASM (Sync)
+Automatically copy the WASM binary from `node_modules` to your project's public folder:
+```bash
+opti-assets-cli sync ./public
 ```
 
 ## Development

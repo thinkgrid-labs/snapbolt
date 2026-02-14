@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Dynamic import for the Wasm module
 const loadWasm = async () => {
     // We import from the local pkg directory (built via wasm-pack)
-    return import('../pkg/opti_assets_browser.js');
+    return import('../pkg/opti_assets.js');
 };
 
 export interface UseImageOptimizerResult {
