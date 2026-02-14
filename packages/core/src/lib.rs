@@ -1,4 +1,3 @@
-use image::DynamicImage;
 use std::io::Cursor;
 use thiserror::Error;
 

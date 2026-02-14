@@ -1,0 +1,54 @@
+{
+    "name": "@think-grid-labs/opti-assets",
+    "version": "0.1.0",
+    "description": "Unified image optimization toolkit for the browser and React",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist",
+        "pkg"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        },
+        "./browser": {
+            "types": "./pkg/opti_assets_browser.d.ts",
+            "import": "./pkg/opti_assets_browser.js",
+            "default": "./pkg/opti_assets_browser.js"
+        }
+    },
+    "scripts": {
+        "build": "npm run build:wasm && npm run build:ts",
+        "build:wasm": "wasm-pack build --target web --out-dir pkg --release",
+        "build:ts": "tsc",
+        "test": "vitest"
+    },
+    "keywords": [
+        "image-optimization",
+        "wasm",
+        "react",
+        "rust",
+        "webp"
+    ],
+    "author": "DennisP <dennis@thinkgrid-labs.com>",
+    "license": "MIT",
+    "peerDependencies": {
+        "react": ">=16.8.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.0.0",
+        "@types/react": "^18.0.0",
+        "concurrently": "^8.0.0",
+        "vitest": "^0.34.0",
+        "@testing-library/react": "^14.0.0",
+        "jsdom": "^22.0.0",
+        "@types/node": "^20.0.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

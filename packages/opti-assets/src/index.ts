@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 
 // Dynamic import for the Wasm module
 const loadWasm = async () => {
-    // In a real implementation, this would point to the built wasm pkg
-    // For now, we assume the user's bundler can handle the import alias or path
-    return import('@think-grid-labs/opti-assets-browser');
+    // We import from the local pkg directory (built via wasm-pack)
+    return import('../pkg/opti_assets_browser.js');
 };
 
 export interface UseImageOptimizerResult {
