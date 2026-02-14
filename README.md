@@ -64,6 +64,37 @@ const SmartImage = ({ src }) => {
 };
 ```
 
+### User Upload Example (Pre-Upload Optimization)
+Optimize a file on the client side before sending it to your server to save bandwidth and storage.
+
+```tsx
+import { useImageOptimizer } from '@think-grid-labs/opti-assets';
+
+const UploadForm = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const { optimizedBlob, loading } = useImageOptimizer(file, 80, 1200);
+
+  const handleUpload = async () => {
+    if (!optimizedBlob) return;
+
+    const formData = new FormData();
+    // Send the tiny optimized version instead of the massive original!
+    formData.append('image', optimizedBlob, 'image.jpg');
+
+    await fetch('/api/upload', { method: 'POST', body: formData });
+  };
+
+  return (
+    <div>
+      <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+      <button onClick={handleUpload} disabled={loading || !optimizedBlob}>
+        {loading ? 'Optimizing...' : 'Upload Tiny Image'}
+      </button>
+    </div>
+  );
+};
+```
+
 ### Vanilla JS / Browser
 For custom integrations or non-React environments.
 
