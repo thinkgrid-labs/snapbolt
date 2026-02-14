@@ -138,6 +138,7 @@ We are committed to making `@think-grid-labs/opti-assets` the gold standard for 
 - [ ] **SIMD Support**: Optimize WASM binaries with SIMD for 2x faster processing on modern browsers.
 - [ ] **Blur-up Helpers**: Generate tiny (4x4) Base64 placeholders automatically for "Instant-Load" UI patterns.
 - [ ] **Automatic Quality**: Content-aware optimization that keeps text sharp while compressing textures harder.
+- [ ] **Advanced Config Props**: Support for passing custom `image-wasm` config directly to hooks and components.
 
 ### 🟡 Mid-Term (Feature Expansion)
 - [ ] **AVIF Encoding**: Implementation of AVIF for even better compression ratios.
@@ -147,6 +148,7 @@ We are committed to making `@think-grid-labs/opti-assets` the gold standard for 
 ### 🔴 Long-Term (Ecosystem)
 - [ ] **Plugin System**: Watermarking, custom filters, and edge-function templates.
 - [ ] **Framework Natives**: Deep integration with Next.js Server Components and Vite build-time hooks.
+- [ ] **Video Processing**: Client-side video thumbnail extraction and lightweight transcoding (WebCodecs).
 - [ ] **Edge Deployment**: Pre-built templates for Cloudflare Workers and Vercel Edge.
 
 ---
