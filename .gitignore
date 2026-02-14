@@ -35,3 +35,6 @@ coverage/
 
 # Rust
 **/*.rs.bk
+pkg/
+dist/
+*.node
