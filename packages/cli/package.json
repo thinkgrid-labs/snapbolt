@@ -1,0 +1,56 @@
+{
+    "name": "@think-grid-labs/opti-assets-cli",
+    "version": "0.1.0",
+    "main": "index.js",
+    "types": "index.d.ts",
+    "napi": {
+        "name": "opti-assets-cli",
+        "triples": {
+            "defaults": true,
+            "additional": [
+                "x86_64-apple-darwin",
+                "aarch64-apple-darwin",
+                "x86_64-unknown-linux-gnu",
+                "x86_64-pc-windows-msvc"
+            ]
+        }
+    },
+    "scripts": {
+        "build": "napi build --platform --release",
+        "build:debug": "napi build --platform",
+        "test": "node index.js"
+    },
+    "devDependencies": {
+        "@napi-rs/cli": "^2.16.0"
+    },
+    "description": "CLI tool for @think-grid-labs/opti-assets",
+    "keywords": [
+        "cli",
+        "image-optimization",
+        "webp",
+        "rust",
+        "opti-assets"
+    ],
+    "author": "DennisP <dennis@thinkgrid-labs.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ThinkGrid-Labs/opti-assets.git",
+        "directory": "packages/cli"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    },
+    "bin": {
+        "opti-assets-cli": "./index.js"
+    },
+    "files": [
+        "index.js",
+        "index.d.ts",
+        "*.node"
+    ],
+    "engines": {
+        "node": ">= 10"
+    }
+}

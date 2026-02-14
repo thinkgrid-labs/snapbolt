@@ -1,0 +1,83 @@
+import { useState, useEffect } from 'react';
+
+// Dynamic import for the Wasm module
+const loadWasm = async () => {
+    // In a real implementation, this would point to the built wasm pkg
+    // For now, we assume the user's bundler can handle the import alias or path
+    return import('@think-grid-labs/opti-assets-browser');
+};
+
+export interface UseImageOptimizerResult {
+    optimizedUrl: string | null;
+    loading: boolean;
+    error: string | null;
+}
+
+export const useImageOptimizer = (src: string | Blob, quality: number = 80): UseImageOptimizerResult => {
+    const [state, setState] = useState<UseImageOptimizerResult>({
+        optimizedUrl: null,
+        loading: false,
+        error: null,
+    });
+
+    useEffect(() => {
+        let mounted = true;
+
+        const process = async () => {
+            if (!src) return;
+
+            setState(prev => ({ ...prev, loading: true, error: null }));
+
+            try {
+                // 1. Get Blob
+                let blob: Blob;
+                if (typeof src === 'string') {
+                    const resp = await fetch(src);
+                    if (!resp.ok) throw new Error(`Failed to fetch image: ${resp.statusText}`);
+                    blob = await resp.blob();
+                } else {
+                    blob = src;
+                }
+
+                // 2. Load bytes
+                const buffer = await blob.arrayBuffer();
+                const bytes = new Uint8Array(buffer);
+
+                // 3. Wasm Optimize
+                const wasm = await loadWasm();
+                const optimizedBytes = wasm.optimize_image_sync(bytes, quality);
+
+                // 4. Create Object URL
+                const optimizedBlob = new Blob([optimizedBytes as unknown as BlobPart], { type: 'image/webp' });
+                const url = URL.createObjectURL(optimizedBlob);
+
+                if (mounted) {
+                    setState({
+                        optimizedUrl: url,
+                        loading: false,
+                        error: null
+                    });
+                }
+            } catch (err: any) {
+                if (mounted) {
+                    setState(prev => ({
+                        ...prev,
+                        loading: false,
+                        error: err.message || 'Unknown error'
+                    }));
+                }
+            }
+        };
+
+        process();
+
+        return () => {
+            mounted = false;
+            if (state.optimizedUrl) {
+                URL.revokeObjectURL(state.optimizedUrl);
+            }
+        };
+    }, [src, quality]);
+
+    return state;
+};

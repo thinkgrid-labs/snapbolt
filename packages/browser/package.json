@@ -1,0 +1,32 @@
+{
+    "name": "@think-grid-labs/opti-assets-browser",
+    "version": "0.1.0",
+    "main": "pkg/opti_assets_browser.js",
+    "module": "pkg/opti_assets_browser.js",
+    "types": "pkg/opti_assets_browser.d.ts",
+    "sideEffects": false,
+    "scripts": {
+        "build": "wasm-pack build --target web --release"
+    },
+    "description": "Wasm-based image optimization for the browser",
+    "keywords": [
+        "wasm",
+        "image-optimization",
+        "webp",
+        "rust",
+        "opti-assets"
+    ],
+    "author": "DennisP <dennis@thinkgrid-labs.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ThinkGrid-Labs/opti-assets.git",
+        "directory": "packages/browser"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "pkg"
+    ]
+}

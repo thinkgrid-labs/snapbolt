@@ -1,0 +1,19 @@
+{
+  "name": "@think-grid-labs/opti-assets-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "concurrently \"npm run build:cli\" \"npm run build:browser\" \"npm run build:react\"",
+    "build:cli": "npm run build --workspace=@think-grid-labs/opti-assets-cli",
+    "build:browser": "npm run build --workspace=@think-grid-labs/opti-assets-browser",
+    "build:react": "npm run build --workspace=@think-grid-labs/opti-assets-react",
+    "test": "cargo test --workspace",
+    "clean": "rimraf packages/*/dist packages/*/pkg packages/*/target target"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0",
+    "rimraf": "^5.0.0"
+  }
+}

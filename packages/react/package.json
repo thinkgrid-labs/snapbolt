@@ -1,0 +1,45 @@
+{
+    "name": "@think-grid-labs/opti-assets-react",
+    "version": "0.1.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc"
+    },
+    "peerDependencies": {
+        "react": ">=16.8.0"
+    },
+    "dependencies": {
+        "@think-grid-labs/opti-assets-browser": "^0.1.0"
+    },
+    "description": "React hooks for @think-grid-labs/opti-assets-browser",
+    "keywords": [
+        "react",
+        "hooks",
+        "image-optimization",
+        "wasm",
+        "opti-assets"
+    ],
+    "author": "DennisP <dennis@thinkgrid-labs.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ThinkGrid-Labs/opti-assets.git",
+        "directory": "packages/react"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "devDependencies": {
+        "typescript": "^5.0.0",
+        "@types/react": "^18.0.0",
+        "vitest": "^0.34.0",
+        "@testing-library/react": "^14.0.0",
+        "jsdom": "^22.0.0",
+        "@types/node": "^20.0.0"
+    }
+}
