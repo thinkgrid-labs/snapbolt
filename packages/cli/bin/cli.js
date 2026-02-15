@@ -9,11 +9,11 @@ const command = args[0];
 
 if (!command || command === '--help' || command === '-h') {
     console.log(`
-@think-grid-labs/opti-assets-cli v${require('../package.json').version}
+@think-grid-labs/snapbolt-cli v${require('../package.json').version}
 
 Usage:
-  opti-assets-cli scan <dir>    - Recursively optimize images in a directory
-  opti-assets-cli sync <dir>    - Sync WASM binary to your public folder
+  snapbolt-cli scan <dir>    - Recursively optimize images in a directory
+  snapbolt-cli sync <dir>    - Sync WASM binary to your public folder
   `);
     process.exit(0);
 }
@@ -32,8 +32,8 @@ if (command === 'scan') {
 
     try {
         // 1. Resolve the path to the WASM package
-        const wasmPkgPath = path.dirname(require.resolve('@think-grid-labs/opti-assets/package.json', { paths: [process.cwd(), __dirname] }));
-        const wasmSource = path.join(wasmPkgPath, 'pkg', 'opti_assets_bg.wasm');
+        const wasmPkgPath = path.dirname(require.resolve('@think-grid-labs/snapbolt/package.json', { paths: [process.cwd(), __dirname] }));
+        const wasmSource = path.join(wasmPkgPath, 'pkg', 'snapbolt_bg.wasm');
 
         if (!fs.existsSync(wasmSource)) {
             throw new Error(`WASM binary not found at ${wasmSource}`);
@@ -45,7 +45,7 @@ if (command === 'scan') {
         }
 
         // 3. Copy file
-        const dest = path.join(targetDir, 'opti_assets_bg.wasm');
+        const dest = path.join(targetDir, 'snapbolt_bg.wasm');
         fs.copyFileSync(wasmSource, dest);
 
         console.log(`✅ Successfully synced WASM binary to: ${dest}`);
@@ -53,7 +53,7 @@ if (command === 'scan') {
 
     } catch (err) {
         console.error(`❌ Error: ${err.message}`);
-        console.log('\nTip: Make sure @think-grid-labs/opti-assets is installed in your project.');
+        console.log('\nTip: Make sure @think-grid-labs/snapbolt is installed in your project.');
         process.exit(1);
     }
 } else {

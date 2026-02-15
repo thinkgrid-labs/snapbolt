@@ -1,15 +1,14 @@
 use napi_derive::napi;
-use napi::Error;
-use std::path::Path;
-use std::fs;
-use walkdir::WalkDir;
 use rayon::prelude::*;
-use opti_assets_core::{optimize_buffer, OptimizeOptions};
+use snapbolt_core::{optimize_buffer, OptimizeOptions};
+use std::fs;
+use std::path::Path;
+use walkdir::WalkDir;
 
 #[napi]
 pub fn optimize_directory(path_str: String) -> u32 {
     let path = Path::new(&path_str);
-    
+
     // Collect all image paths first
     let entries: Vec<_> = WalkDir::new(path)
         .into_iter()
@@ -30,7 +29,7 @@ pub fn optimize_directory(path_str: String) -> u32 {
     // Process in parallel using Rayon
     entries.par_iter().for_each(|entry| {
         let path = entry.path();
-        
+
         if let Ok(data) = fs::read(path) {
             let options = OptimizeOptions::default();
             if let Ok(optimized) = optimize_buffer(&data, &options) {
@@ -42,4 +41,30 @@ pub fn optimize_directory(path_str: String) -> u32 {
     });
 
     count as u32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_optimize_directory_empty() {
+        let dir = tempdir().unwrap();
+        let count = optimize_directory(dir.path().to_str().unwrap().to_string());
+        assert_eq!(count, 0);
+    }
+
+    #[test]
+    fn test_optimize_directory_with_images() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("test.png");
+        fs::write(file_path, b"fake-png-data").unwrap();
+
+        let count = optimize_directory(dir.path().to_str().unwrap().to_string());
+        // Since we are using fake data, the core optimizer will fail to decode it,
+        // but the scanner should still count 1 file.
+        assert_eq!(count, 1);
+    }
 }

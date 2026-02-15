@@ -1,4 +1,4 @@
-# @think-grid-labs/opti-assets
+# @think-grid-labs/snapbolt
 
 A high-performance image optimization toolkit.
 
@@ -6,8 +6,8 @@ A high-performance image optimization toolkit.
 This toolkit provides professional-grade image optimization (resizing and JPEG/WebP encoding) that runs entirely on the client side or in a native build-time environment.
 
 ### Packages
-- **`@think-grid-labs/opti-assets`**: The core library containing React hooks and WASM bindings.
-- **`@think-grid-labs/opti-assets-cli`**: Native CLI for bulk optimization and WASM asset synchronization.
+- **`@think-grid-labs/snapbolt`**: The core library containing React hooks and WASM bindings.
+- **`@think-grid-labs/snapbolt-cli`**: Native CLI for bulk optimization and WASM asset synchronization.
 
 ---
 
@@ -24,7 +24,7 @@ This toolkit provides professional-grade image optimization (resizing and JPEG/W
 
 ### Installation
 ```bash
-npm install @think-grid-labs/opti-assets
+npm install @think-grid-labs/snapbolt
 ```
 
 ### Essential Step: WASM Synchronization
@@ -33,14 +33,14 @@ Because WASM binaries are served as separate files, you must ensure the `.wasm` 
 #### Option A: Automated (Recommended)
 Use our CLI to automatically find and copy the binary from `node_modules` to your target directory:
 ```bash
-npx @think-grid-labs/opti-assets-cli sync ./public
+npx @think-grid-labs/snapbolt-cli sync ./public
 ```
 *Tip: Add this to your `postinstall` script in `package.json` to keep it synchronized automatically.*
 
 #### Option B: Manual
 If you prefer not to use the CLI, manually copy the file:
-- **Source**: `node_modules/@think-grid-labs/opti-assets/pkg/opti_assets_bg.wasm`
-- **Destination**: `your-project/public/opti_assets_bg.wasm`
+- **Source**: `node_modules/@think-grid-labs/snapbolt/pkg/snapbolt_bg.wasm`
+- **Destination**: `your-project/public/snapbolt_bg.wasm`
 
 ---
 
@@ -50,7 +50,7 @@ If you prefer not to use the CLI, manually copy the file:
 The simplest way to optimize images on the fly. Pass a URL or a Blob.
 
 ```tsx
-import { useImageOptimizer } from '@think-grid-labs/opti-assets';
+import { useImageOptimizer } from '@think-grid-labs/snapbolt';
 
 const SmartImage = ({ src }) => {
   // src can be a URL string or a File/Blob
@@ -68,7 +68,7 @@ const SmartImage = ({ src }) => {
 Optimize a file on the client side before sending it to your server to save bandwidth and storage.
 
 ```tsx
-import { useImageOptimizer } from '@think-grid-labs/opti-assets';
+import { useImageOptimizer } from '@think-grid-labs/snapbolt';
 
 const UploadForm = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -99,11 +99,11 @@ const UploadForm = () => {
 For custom integrations or non-React environments.
 
 ```ts
-import init, { optimize_image_sync } from '@think-grid-labs/opti-assets/browser';
+import init, { optimize_image_sync } from '@think-grid-labs/snapbolt/browser';
 
 async function optimize(bytes) {
   // Ensure the WASM is initialized (path relative to your public root)
-  await init('/opti_assets_bg.wasm'); 
+  await init('/snapbolt_bg.wasm'); 
   
   // Optimize: returns a Uint8Array
   const optimizedData = optimize_image_sync(bytes, 75, 300);
@@ -114,25 +114,25 @@ async function optimize(bytes) {
 
 ---
 
-## 3. CLI: @think-grid-labs/opti-assets-cli
+## 3. CLI: @think-grid-labs/snapbolt-cli
 Native tool for high-speed local image processing.
 
 ### Bulk Optimize
 Recursively scan and shrink images in your local `public` folder before deployment:
 ```bash
-npx @think-grid-labs/opti-assets-cli scan ./public
+npx @think-grid-labs/snapbolt-cli scan ./public
 ```
 
 ### Sync Assets
 Synchronize the required WASM binaries to your web project:
 ```bash
-npx @think-grid-labs/opti-assets-cli sync ./public
+npx @think-grid-labs/snapbolt-cli sync ./public
 ```
 ---
 
 ## 🗺️ Roadmap
 
-We are committed to making `@think-grid-labs/opti-assets` the gold standard for decentralized image optimization.
+We are committed to making `@think-grid-labs/snapbolt` the gold standard for decentralized image optimization.
 
 ### 🟢 Short-Term (Stable & Fast)
 - [ ] **SIMD Support**: Optimize WASM binaries with SIMD for 2x faster processing on modern browsers.

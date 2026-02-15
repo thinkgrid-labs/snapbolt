@@ -67,11 +67,34 @@ mod tests {
     }
 
     #[test]
+    fn test_optimize_buffer_quality_impact() {
+        // High quality
+        let opt_high = OptimizeOptions { quality: 90.0 };
+        let res_high = optimize_buffer(MINIMAL_PNG, &opt_high).unwrap();
+
+        // Low quality
+        let opt_low = OptimizeOptions { quality: 10.0 };
+        let res_low = optimize_buffer(MINIMAL_PNG, &opt_low).unwrap();
+
+        // For a 1x1 image, sizes might be identical, but we ensure both succeed
+        assert!(res_high.len() > 0);
+        assert!(res_low.len() > 0);
+    }
+
+    #[test]
     fn test_optimize_buffer_invalid_data() {
         let options = OptimizeOptions::default();
         let invalid_data = &[0, 1, 2, 3];
         let result = optimize_buffer(invalid_data, &options);
 
         assert!(matches!(result, Err(OptimizerError::DecodeError(_))));
+    }
+
+    #[test]
+    fn test_unsupported_format() {
+        let options = OptimizeOptions::default();
+        let empty_data = &[];
+        let result = optimize_buffer(empty_data, &options);
+        assert!(result.is_err());
     }
 }

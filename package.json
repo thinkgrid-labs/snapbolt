@@ -1,14 +1,14 @@
 {
-  "name": "@think-grid-labs/opti-assets-monorepo",
+  "name": "@think-grid-labs/snapbolt-monorepo",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "build": "concurrently \"npm run build:cli\" \"npm run build:opti-assets\"",
-    "build:cli": "npm run build --workspace=@think-grid-labs/opti-assets-cli",
-    "build:opti-assets": "npm run build --workspace=@think-grid-labs/opti-assets",
-    "test": "cargo test --workspace",
+    "build": "concurrently \"npm run build:cli\" \"npm run build:snapbolt\"",
+    "build:cli": "npm run build --workspace=@think-grid-labs/snapbolt-cli",
+    "build:snapbolt": "npm run build --workspace=@think-grid-labs/snapbolt",
+    "test": "npm test --workspaces --if-present && cargo test --workspace",
     "clean": "rimraf packages/*/dist packages/*/pkg packages/*/target target"
   },
   "devDependencies": {

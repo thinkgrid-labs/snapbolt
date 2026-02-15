@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 // Dynamic import for the Wasm module
 const loadWasm = async () => {
     // We import from the local pkg directory (built via wasm-pack)
-    return import('../pkg/opti_assets.js');
+    return import('../pkg/snapbolt.js');
 };
 
 export interface UseImageOptimizerResult {
@@ -21,6 +21,7 @@ export const useImageOptimizer = (src: string | Blob, quality: number = 80): Use
 
     useEffect(() => {
         let mounted = true;
+        let currentUrl: string | null = null;
 
         const process = async () => {
             if (!src) return;
@@ -49,6 +50,7 @@ export const useImageOptimizer = (src: string | Blob, quality: number = 80): Use
                 // 4. Create Object URL
                 const optimizedBlob = new Blob([optimizedBytes as unknown as BlobPart], { type: 'image/webp' });
                 const url = URL.createObjectURL(optimizedBlob);
+                currentUrl = url; // Store locally for cleanup
 
                 if (mounted) {
                     setState({
@@ -72,8 +74,8 @@ export const useImageOptimizer = (src: string | Blob, quality: number = 80): Use
 
         return () => {
             mounted = false;
-            if (state.optimizedUrl) {
-                URL.revokeObjectURL(state.optimizedUrl);
+            if (currentUrl) {
+                URL.revokeObjectURL(currentUrl);
             }
         };
     }, [src, quality]);

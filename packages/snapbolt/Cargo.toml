@@ -1,0 +1,14 @@
+[package]
+name = "snapbolt"
+version = "0.1.2"
+edition = "2021"
+description = "High-performance image optimization toolkit powered by Rust and WASM"
+license = "MIT"
+repository = "https://github.com/ThinkGrid-Labs/snapbolt"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+snapbolt-core = { path = "../core" }

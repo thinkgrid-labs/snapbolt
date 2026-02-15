@@ -1,5 +1,5 @@
+use snapbolt_core::{optimize_buffer, OptimizeOptions};
 use wasm_bindgen::prelude::*;
-use opti_assets_core::{optimize_buffer, OptimizeOptions};
 
 #[wasm_bindgen]
 pub fn optimize_image_sync(input: &[u8], quality: f32) -> Result<Vec<u8>, JsValue> {

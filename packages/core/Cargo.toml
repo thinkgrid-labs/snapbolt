@@ -1,8 +1,8 @@
 [package]
-name = "opti-assets-core"
+name = "snapbolt-core"
 version = "0.1.0"
 edition = "2021"
-description = "Core logic for opti-assets image optimization"
+description = "Core logic for snapbolt image optimization"
 license = "MIT"
 
 [dependencies]
