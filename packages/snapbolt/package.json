@@ -1,6 +1,6 @@
 {
     "name": "@think-grid-labs/snapbolt",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "description": "Unified image optimization toolkit for the browser and React",
     "main": "./dist/index.js",
     "module": "./dist/index.js",
@@ -20,11 +20,12 @@
             "types": "./pkg/snapbolt.d.ts",
             "import": "./pkg/snapbolt.js",
             "default": "./pkg/snapbolt.js"
-        }
+        },
+        "./package.json": "./package.json"
     },
     "scripts": {
         "build": "npm run build:wasm && npm run build:ts",
-        "build:wasm": "npx wasm-pack build --target web --out-dir pkg --release",
+        "build:wasm": "npx wasm-pack build --target web --out-dir pkg --release && rm pkg/.gitignore",
         "build:ts": "tsc",
         "test": "vitest"
     },
