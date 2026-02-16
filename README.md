@@ -129,6 +129,30 @@ async function optimize(bytes) {
 
 ---
 
+---
+
+## 🎯 Common Use Cases
+
+### 1. Zero-Cost User Uploads
+Resize high-res images (e.g., 5MB Avatars, KYC docs) on the client **before** uploading.
+- **Benefit**: 99% bandwidth saving on uploads. Zero server CPU usage.
+
+### 2. Decentralized & Local-First Apps
+Perfect for Web3 DApps, IPFS, or PWAs where you don't have a centralized backend to optimize images.
+- **Benefit**: Professional optimization running entirely in the browser.
+
+### 3. Real-Time "Optimistic" Previews
+Instantly generate highly optimized `blob:` URLs for CMS or blog editors while the real upload happens in the background.
+- **Benefit**: The UI feels instant and responsive.
+
+### 4. Privacy-Focused Applications
+Process sensitive images locally (Medical, Secure Messaging) without ever sending unencrypted high-res data to a third-party cloud.
+
+### 5. Mobile Data Saver
+Downscale 4K images to 1080p WebP before display or upload to save battery and data for users on spotty connections.
+
+---
+
 ## 3. CLI: @think-grid-labs/snapbolt-cli
 Native tool for high-speed local image processing.
 
