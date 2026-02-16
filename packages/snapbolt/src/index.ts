@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
+import init, { optimize_image_sync } from '../pkg/snapbolt';
 
-// Dynamic import for the Wasm module
-const loadWasm = async () => {
-    // We import from the local pkg directory (built via wasm-pack)
-    return import('../pkg/snapbolt.js');
-};
+export interface ImageOptimizerOptions {
+    quality?: number;
+    crossOrigin?: 'anonymous' | 'use-credentials';
+    wasmUrl?: string; // URL to snapbolt_bg.wasm
+    width?: number;   // Max width to resize to
+    height?: number;  // Max height to resize to
+    cache?: boolean;  // Enable/disable caching (default: true)
+}
 
 export interface UseImageOptimizerResult {
     optimizedUrl: string | null;
@@ -12,7 +16,69 @@ export interface UseImageOptimizerResult {
     error: string | null;
 }
 
-export const useImageOptimizer = (src: string | Blob, quality: number = 80): UseImageOptimizerResult => {
+// Helper: Resize image using Canvas
+const resizeImage = async (blob: Blob, maxWidth?: number, maxHeight?: number): Promise<Blob> => {
+    if (!maxWidth && !maxHeight) return blob;
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(blob);
+        img.src = url;
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            let width = img.width;
+            let height = img.height;
+
+            // Simple aspect ratio resize
+            if (maxWidth && width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+            }
+            if (maxHeight && height > maxHeight) {
+                width = Math.round((width * maxHeight) / height);
+                height = maxHeight;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Failed to get canvas context'));
+                return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((b) => {
+                if (b) resolve(b);
+                else reject(new Error('Canvas toBlob failed'));
+            }, blob.type);
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Failed to load image for resizing'));
+        };
+    });
+};
+
+export const useImageOptimizer = (
+    src: string | Blob,
+    optionsOrQuality: number | ImageOptimizerOptions = {}
+): UseImageOptimizerResult => {
+    // Backward compatibility: handle if 2nd arg is just a number (quality)
+    const options: ImageOptimizerOptions =
+        typeof optionsOrQuality === 'number'
+            ? { quality: optionsOrQuality }
+            : optionsOrQuality;
+
+    const {
+        quality = 80,
+        crossOrigin,
+        wasmUrl,
+        width,
+        height,
+        cache = true
+    } = options;
+
     const [state, setState] = useState<UseImageOptimizerResult>({
         optimizedUrl: null,
         loading: false,
@@ -29,28 +95,85 @@ export const useImageOptimizer = (src: string | Blob, quality: number = 80): Use
             setState(prev => ({ ...prev, loading: true, error: null }));
 
             try {
-                // 1. Get Blob
+                // 0. Check Cache
+                const cacheKey = typeof src === 'string' ? `snapbolt:${src}:${quality}:${width || ''}:${height || ''}` : null;
+                if (cache && cacheKey && 'caches' in window) {
+                    try {
+                        const cacheStorage = await caches.open('snapbolt-v1');
+                        const cachedResponse = await cacheStorage.match(cacheKey);
+                        if (cachedResponse) {
+                            const cachedBlob = await cachedResponse.blob();
+                            const url = URL.createObjectURL(cachedBlob);
+                            currentUrl = url;
+                            if (mounted) setState({ optimizedUrl: url, loading: false, error: null });
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn('Snapbolt Cache Error:', e);
+                    }
+                }
+
+                // 1. Get Blob & Validate Content-Type
                 let blob: Blob;
                 if (typeof src === 'string') {
-                    const resp = await fetch(src);
+                    const fetchOpts: RequestInit = {};
+                    if (crossOrigin) fetchOpts.mode = 'cors'; // 'cors' is default, but explicit doesn't hurt. 
+                    // To use credentials, one would set credentials: 'include'. 
+                    // The user prop is 'anonymous' or 'use-credentials' mapping to the crossOrigin attribute. 
+                    // Fetch API uses `credentials` option: 'omit' | 'same-origin' | 'include'.
+                    // 'anonymous' -> credentials: 'omit' or 'same-origin' (default).
+                    // 'use-credentials' -> credentials: 'include'.
+                    if (crossOrigin === 'use-credentials') fetchOpts.credentials = 'include';
+                    else if (crossOrigin === 'anonymous') fetchOpts.credentials = 'same-origin'; // or omit
+
+                    const resp = await fetch(src, fetchOpts);
                     if (!resp.ok) throw new Error(`Failed to fetch image: ${resp.statusText}`);
+
+                    const contentType = resp.headers.get('Content-Type');
+                    if (contentType && !['image/jpeg', 'image/png', 'image/webp'].some(t => contentType.includes(t))) {
+                        // Unsupported type: return original URL (skip optimization)
+                        console.warn(`Snapbolt: Unsupported Content-Type ${contentType}, skipping optimization.`);
+                        if (mounted) setState({ optimizedUrl: src, loading: false, error: null });
+                        return;
+                    }
+
                     blob = await resp.blob();
                 } else {
                     blob = src;
                 }
 
-                // 2. Load bytes
+                // 2. Resize (Memory Safety)
+                if (width || height) {
+                    blob = await resizeImage(blob, width, height);
+                }
+
+                // 3. Load bytes
                 const buffer = await blob.arrayBuffer();
                 const bytes = new Uint8Array(buffer);
 
-                // 3. Wasm Optimize
-                const wasm = await loadWasm();
-                const optimizedBytes = wasm.optimize_image_sync(bytes, quality);
+                // 4. Wasm Optimize
+                // Initialize WASM. If wasmUrl provided, use it. Otherwise default behavior.
+                await init(wasmUrl);
+                const optimizedBytes = optimize_image_sync(bytes, quality);
 
-                // 4. Create Object URL
+                // 5. Create Result
                 const optimizedBlob = new Blob([optimizedBytes as unknown as BlobPart], { type: 'image/webp' });
+
+                // 6. Save to Cache
+                if (cache && cacheKey && 'caches' in window) {
+                    try {
+                        const cacheStorage = await caches.open('snapbolt-v1');
+                        // Create a fake response to store
+                        const headers = new Headers({ 'Content-Type': 'image/webp' });
+                        const responseToCache = new Response(optimizedBlob, { headers });
+                        await cacheStorage.put(cacheKey, responseToCache);
+                    } catch (e) {
+                        console.warn('Snapbolt Cache Write Error:', e);
+                    }
+                }
+
                 const url = URL.createObjectURL(optimizedBlob);
-                currentUrl = url; // Store locally for cleanup
+                currentUrl = url;
 
                 if (mounted) {
                     setState({
@@ -60,12 +183,15 @@ export const useImageOptimizer = (src: string | Blob, quality: number = 80): Use
                     });
                 }
             } catch (err: any) {
+                console.error("Snapbolt Optimization Failed:", err);
                 if (mounted) {
-                    setState(prev => ({
-                        ...prev,
+                    // Fallback to original if optimization fails
+                    const fallbackUrl = typeof src === 'string' ? src : null;
+                    setState({
+                        optimizedUrl: fallbackUrl,
                         loading: false,
                         error: err.message || 'Unknown error'
-                    }));
+                    });
                 }
             }
         };
@@ -74,11 +200,9 @@ export const useImageOptimizer = (src: string | Blob, quality: number = 80): Use
 
         return () => {
             mounted = false;
-            if (currentUrl) {
-                URL.revokeObjectURL(currentUrl);
-            }
+            if (currentUrl) URL.revokeObjectURL(currentUrl);
         };
-    }, [src, quality]);
+    }, [src, quality, crossOrigin, wasmUrl, width, height, cache]);
 
     return state;
 };
