@@ -130,7 +130,7 @@ export const useImageOptimizer = (
                     if (!resp.ok) throw new Error(`Failed to fetch image: ${resp.statusText}`);
 
                     const contentType = resp.headers.get('Content-Type');
-                    if (contentType && !['image/jpeg', 'image/png', 'image/webp'].some(t => contentType.includes(t))) {
+                    if (contentType && !['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].some(t => contentType.includes(t))) {
                         // Unsupported type: return original URL (skip optimization)
                         console.warn(`Snapbolt: Unsupported Content-Type ${contentType}, skipping optimization.`);
                         if (mounted) setState({ optimizedUrl: src, loading: false, error: null });
