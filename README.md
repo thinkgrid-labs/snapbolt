@@ -18,6 +18,9 @@ This toolkit provides professional-grade image optimization (resizing and JPEG/W
 - **Zero Server Overhead**: Shift the heavy lifting of image processing to the client side. No more expensive cloud-functions for basic resizing.
 - **Privacy First**: Process sensitive images locally without ever sending unoptimized high-res data to your servers.
 
+## Supported Formats
+**JPEG, JPG, PNG, WebP** (GIF/SVG/TIFF skipped automatically).
+
 ---
 
 ## 1. Library Installation & Set-Up
@@ -140,6 +143,21 @@ Synchronize the required WASM binaries to your web project:
 ```bash
 npx @think-grid-labs/snapbolt-cli sync ./public
 ```
+---
+
+---
+
+## Troubleshooting
+
+### CORS Issues (Images not loading/optimizing)
+If your images come from a CDN/S3 and are not optimizing:
+1.  **Check Headers**: The server MUST return `Access-Control-Allow-Origin`.
+2.  **Enable Mode**: Pass `{ crossOrigin: 'anonymous' }` to `useImageOptimizer`.
+
+### Next.js Integration
+If you see `Module not found`:
+- Add `transpilePackages: ['@think-grid-labs/snapbolt']` to `next.config.js`.
+
 ---
 
 ## 🗺️ Roadmap

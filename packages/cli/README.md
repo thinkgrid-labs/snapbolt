@@ -15,6 +15,13 @@ If you are using `@think-grid-labs/snapbolt` in a web project, use this to copy 
 snapbolt-cli sync ./public
 ```
 
+**Pro Tip:** Add this to your `package.json` scripts to automate it for your team:
+```json
+"scripts": {
+  "postinstall": "snapbolt-cli sync ./public"
+}
+```
+
 ### 2. Bulk Optimize (Scan)
 Recursively scan and shrink images (PNG/JPG) in your local folder:
 ```bash

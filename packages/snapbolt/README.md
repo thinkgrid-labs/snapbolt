@@ -88,8 +88,22 @@ Snapbolt automatically caches optimized results in the browser's Cache API (`sna
 - To disable: `useImageOptimizer(src, { cache: false })`
 
 ### 5. Supported File Types
-Core supports: **JPEG, PNG, WebP**.
+Core supports: **JPEG, JPG, PNG, WebP**.
 - Unsupported types (GIF, SVG, TIFF) are **automatically detected** and skipped (returns original URL).
+
+## Troubleshooting
+
+### 1. Image not optimizing (Returns original URL)
+- **Check Console**: Look for "Snapbolt: Unsupported Content-Type" warnings.
+- **CORS**: If using an external CDN (S3, Cloudinary), ensure it returns `Access-Control-Allow-Origin: *` or your domain. Use `{ crossOrigin: 'anonymous' }`.
+
+### 2. "Module not found" in Next.js
+- Ensure `@think-grid-labs/snapbolt` is in `transpilePackages` in `next.config.js`.
+- If using `pnpm` workspaces, ensure the package is correctly linked or installed.
+
+### 3. "RuntimeError: memory access out of bounds"
+- The image is too large for the WASM memory buffer.
+- **Fix**: Use the `width` or `height` prop to downscale the image using the Canvas API *before* sending it to WASM.
 
 ## Features
 - **Client-Side Optimization**: Zero server cost.
