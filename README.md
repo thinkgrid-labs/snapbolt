@@ -42,6 +42,18 @@ If you prefer not to use the CLI, manually copy the file:
 - **Source**: `node_modules/@think-grid-labs/snapbolt/pkg/snapbolt_bg.wasm`
 - **Destination**: `your-project/public/snapbolt_bg.wasm`
 
+### Next.js Integration
+If you are using Next.js and see `Module not found` errors:
+1.  **Transpile the Package**:
+    Update `next.config.js` or `next.config.ts`:
+    ```ts
+    const nextConfig = {
+      transpilePackages: ['@think-grid-labs/snapbolt'],
+      // ...
+    }
+    ```
+2.  **Sync WASM**: Ensure the `.wasm` file is in your `public` folder (see above).
+
 ---
 
 ## 2. Usage Examples
