@@ -58,6 +58,21 @@ useImageOptimizer(src, {
 })
 ```
 
+#### Next.js Integration
+If you see `Module not found` errors, you need to transpile the package.
+1.  **Update `next.config.js` or `next.config.ts`**:
+    ```ts
+    const nextConfig = {
+      transpilePackages: ['@think-grid-labs/snapbolt'],
+      // ...
+    }
+    ```
+2.  **Sync WASM to Public**:
+    Run this command to copy the WASM file to your public folder so the browser can load it:
+    ```bash
+    npx @think-grid-labs/snapbolt-cli sync ./public
+    ```
+
 ### 3. Memory Safety (Large Images)
 Optimizing 4K/8K images in WASM can crash mobile browsers due to memory limits.
 **Best Practice:** Always provide a `width` or `height` to downscale the image *before* processing.
