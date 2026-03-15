@@ -54,7 +54,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build WASM
         run: npm run build:wasm -w @think-grid-labs/snapbolt
@@ -100,7 +100,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build native addon
         run: npm run build -w @think-grid-labs/snapbolt-cli
@@ -137,7 +137,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install all dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build snapbolt
         run: npm run build -w @think-grid-labs/snapbolt

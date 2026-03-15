@@ -31,7 +31,7 @@
         "rust",
         "snapbolt"
     ],
-    "author": "DennisP <dennis@thinkgrid-labs.com>",
+    "author": "DennisP <dennis@thinkgrid.dev>",
     "license": "MIT",
     "repository": {
         "type": "git",

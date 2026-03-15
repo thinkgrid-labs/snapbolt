@@ -49,11 +49,11 @@
         "wasm",
         "webp"
     ],
-    "author": "DennisP <dennis@thinkgrid-labs.com>",
+    "author": "DennisP <dennis@thinkgrid.dev>",
     "license": "MIT",
     "peerDependencies": {
         "react": ">=16.8.0",
-        "@think-grid-labs/snapbolt-cli": "^0.1.7"
+        "@think-grid-labs/snapbolt-cli": ">=0.1.0"
     },
     "peerDependenciesMeta": {
         "@think-grid-labs/snapbolt-cli": {

@@ -1,6 +1,6 @@
 [package]
 name = "snapbolt"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 description = "High-performance image optimization toolkit powered by Rust and WASM"
 license = "MIT"
