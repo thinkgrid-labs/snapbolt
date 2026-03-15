@@ -30,6 +30,7 @@ describe('useImageOptimizer', () => {
 
         (global.fetch as any).mockResolvedValue({
             ok: true,
+            headers: new Headers({ 'Content-Type': 'image/png' }),
             blob: () => Promise.resolve(mockBlob),
         });
 
@@ -43,6 +44,7 @@ describe('useImageOptimizer', () => {
     it('should handle fetch errors', async () => {
         (global.fetch as any).mockResolvedValue({
             ok: false,
+            headers: new Headers(),
             statusText: 'Not Found',
         });
 
@@ -50,7 +52,8 @@ describe('useImageOptimizer', () => {
 
         await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
         expect(result.current.error).toContain('Failed to fetch image');
-        expect(result.current.optimizedUrl).toBeNull();
+        // Hook falls back to the original src on error (graceful degradation)
+        expect(result.current.optimizedUrl).toBe('invalid.png');
     });
 
     it('should cleanup on unmount', async () => {
@@ -59,6 +62,7 @@ describe('useImageOptimizer', () => {
 
         (global.fetch as any).mockResolvedValue({
             ok: true,
+            headers: new Headers({ 'Content-Type': 'image/png' }),
             blob: () => Promise.resolve(mockBlob),
         });
 
