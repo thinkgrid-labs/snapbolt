@@ -12,9 +12,10 @@ if (typeof window !== 'undefined') {
     window.URL.revokeObjectURL = vi.fn();
 }
 
-// Mock the Wasm Module import
+// Mock the Wasm Module import.
+// `init` is the default export; `optimize_image_sync` is a named export.
 vi.mock('../pkg/snapbolt.js', () => ({
-    init: vi.fn().mockResolvedValue({}),
+    default: vi.fn().mockResolvedValue({}),
     optimize_image_sync: vi.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
 }));
 
