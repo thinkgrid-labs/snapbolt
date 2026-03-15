@@ -1,6 +1,6 @@
 {
     "name": "@think-grid-labs/snapbolt-cli",
-    "version": "0.1.7",
+    "version": "0.2.0",
     "main": "index.js",
     "types": "index.d.ts",
     "napi": {
@@ -45,9 +45,15 @@
     "bin": {
         "snapbolt-cli": "./bin/cli.js"
     },
+    "exports": {
+        ".": "./index.js",
+        "./handler": "./handler.js"
+    },
     "files": [
         "index.js",
         "index.d.ts",
+        "handler.js",
+        "handler.d.ts",
         "*.node",
         "bin",
         "README.md"

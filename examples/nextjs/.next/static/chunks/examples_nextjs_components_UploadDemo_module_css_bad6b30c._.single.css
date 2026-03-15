@@ -1,0 +1,144 @@
+/* [project]/examples/nextjs/components/UploadDemo.module.css [app-client] (css) */
+.UploadDemo-module__be0WAq__wrapper {
+  flex-direction: column;
+  gap: 1rem;
+  display: flex;
+}
+
+.UploadDemo-module__be0WAq__dropzone {
+  cursor: pointer;
+  text-align: center;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 1.25rem;
+  transition: border-color .15s, background .15s;
+  display: flex;
+}
+
+.UploadDemo-module__be0WAq__dropzone:hover {
+  background: #f5f5ff;
+  border-color: #6366f1;
+}
+
+.UploadDemo-module__be0WAq__hiddenInput {
+  display: none;
+}
+
+.UploadDemo-module__be0WAq__fileName {
+  color: #111;
+  font-size: .9rem;
+  font-weight: 500;
+}
+
+.UploadDemo-module__be0WAq__placeholder {
+  color: #9ca3af;
+  font-size: .9rem;
+}
+
+.UploadDemo-module__be0WAq__comparison {
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  display: grid;
+}
+
+.UploadDemo-module__be0WAq__arrowCol {
+  color: #9ca3af;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.UploadDemo-module__be0WAq__panel {
+  flex-direction: column;
+  gap: .5rem;
+  display: flex;
+}
+
+.UploadDemo-module__be0WAq__panelLabel {
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #6b7280;
+  font-size: .78rem;
+  font-weight: 600;
+}
+
+.UploadDemo-module__be0WAq__thumb {
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  width: 100%;
+  height: 160px;
+  display: block;
+}
+
+.UploadDemo-module__be0WAq__skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%) 0 0 / 200% 100%;
+  border-radius: 6px;
+  width: 100%;
+  height: 160px;
+  animation: 1.4s infinite UploadDemo-module__be0WAq__shimmer;
+}
+
+@keyframes UploadDemo-module__be0WAq__shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.UploadDemo-module__be0WAq__size {
+  color: #555;
+  align-items: center;
+  gap: .5rem;
+  font-size: .82rem;
+  display: flex;
+}
+
+.UploadDemo-module__be0WAq__badge {
+  color: #15803d;
+  background: #dcfce7;
+  border-radius: 99px;
+  padding: 1px 7px;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.UploadDemo-module__be0WAq__error {
+  color: #dc2626;
+  font-size: .85rem;
+}
+
+.UploadDemo-module__be0WAq__success {
+  color: #15803d;
+  font-size: .9rem;
+  font-weight: 500;
+}
+
+.UploadDemo-module__be0WAq__uploadBtn {
+  color: #fff;
+  cursor: pointer;
+  background: #4f46e5;
+  border: none;
+  border-radius: 8px;
+  align-self: flex-start;
+  padding: .6rem 1.25rem;
+  font-size: .9rem;
+  font-weight: 500;
+  transition: background .15s;
+}
+
+.UploadDemo-module__be0WAq__uploadBtn:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.UploadDemo-module__be0WAq__uploadBtn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/*# sourceMappingURL=examples_nextjs_components_UploadDemo_module_css_bad6b30c._.single.css.map*/

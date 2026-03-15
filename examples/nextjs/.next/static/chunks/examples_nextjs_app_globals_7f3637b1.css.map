@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["file:///Users/akosidencio/Documents/BOOKSPINE/snapbolt/examples/nextjs/app/globals.css"],"sourcesContent":["*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n\nbody {\n  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n  background: #f8f9fa;\n  color: #1a1a1a;\n  line-height: 1.6;\n}\n\n.container {\n  max-width: 900px;\n  margin: 0 auto;\n  padding: 2rem 1.5rem;\n}\n\nh1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }\nh2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #333; }\np  { color: #555; margin-bottom: 1rem; font-size: 0.95rem; }\n\n.badge {\n  display: inline-block;\n  background: #e8f5e9;\n  color: #2e7d32;\n  font-size: 0.75rem;\n  font-weight: 600;\n  padding: 2px 8px;\n  border-radius: 99px;\n  margin-bottom: 1.25rem;\n  letter-spacing: 0.02em;\n}\n\n.section {\n  background: #fff;\n  border: 1px solid #e5e7eb;\n  border-radius: 12px;\n  padding: 1.75rem;\n  margin-bottom: 1.5rem;\n}\n\n.divider { border: none; border-top: 1px solid #e5e7eb; margin: 2rem 0; }\n"],"names":[],"mappings":"AAAA;;;;;;AAEA;;;;;;;AAOA;;;;;;AAMA;;;;;;AACA;;;;;;;AACA;;;;;;AAEA;;;;;;;;;;;;AAYA;;;;;;;;AAQA","debugId":null}}]
+}

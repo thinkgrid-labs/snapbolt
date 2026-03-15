@@ -1,6 +1,6 @@
 {
     "name": "@think-grid-labs/snapbolt",
-    "version": "0.1.7",
+    "version": "0.2.0",
     "description": "Unified image optimization toolkit for the browser and React",
     "main": "./dist/index.js",
     "module": "./dist/index.js",
@@ -8,6 +8,8 @@
     "files": [
         "dist",
         "pkg",
+        "handler.js",
+        "handler.d.ts",
         "README.md"
     ],
     "exports": {
@@ -16,10 +18,19 @@
             "import": "./dist/index.js",
             "default": "./dist/index.js"
         },
+        "./image": {
+            "types": "./dist/image.d.ts",
+            "import": "./dist/image.js",
+            "default": "./dist/image.js"
+        },
         "./browser": {
             "types": "./pkg/snapbolt.d.ts",
             "import": "./pkg/snapbolt.js",
             "default": "./pkg/snapbolt.js"
+        },
+        "./handler": {
+            "types": "./handler.d.ts",
+            "default": "./handler.js"
         },
         "./package.json": "./package.json"
     },
@@ -41,7 +52,13 @@
     "author": "DennisP <dennis@thinkgrid-labs.com>",
     "license": "MIT",
     "peerDependencies": {
-        "react": ">=16.8.0"
+        "react": ">=16.8.0",
+        "@think-grid-labs/snapbolt-cli": "^0.1.7"
+    },
+    "peerDependenciesMeta": {
+        "@think-grid-labs/snapbolt-cli": {
+            "optional": true
+        }
     },
     "devDependencies": {
         "typescript": "^5.0.0",

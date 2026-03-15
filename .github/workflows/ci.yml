@@ -1,0 +1,151 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # Core — Rust unit tests for all workspace crates
+  # ─────────────────────────────────────────────────────────────────
+  core:
+    name: Rust workspace tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Test all workspace crates
+        run: cargo test --workspace --exclude snapbolt-server
+
+  # ─────────────────────────────────────────────────────────────────
+  # snapbolt — WASM build + TypeScript typecheck + vitest
+  # ─────────────────────────────────────────────────────────────────
+  snapbolt:
+    name: snapbolt (WASM + TS)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build WASM
+        run: npm run build:wasm -w @think-grid-labs/snapbolt
+
+      - name: Build TypeScript
+        run: npm run build:ts -w @think-grid-labs/snapbolt
+
+      - name: Unit tests
+        run: npm test -w @think-grid-labs/snapbolt
+
+      - name: Assert dist exists
+        run: |
+          test -f packages/snapbolt/dist/index.js   || (echo "dist/index.js missing"   && exit 1)
+          test -f packages/snapbolt/dist/index.d.ts || (echo "dist/index.d.ts missing" && exit 1)
+          test -f packages/snapbolt/pkg/snapbolt_bg.wasm || (echo "pkg/snapbolt_bg.wasm missing" && exit 1)
+
+  # ─────────────────────────────────────────────────────────────────
+  # snapbolt-cli — NAPI native addon build (matrix: linux + mac)
+  # ─────────────────────────────────────────────────────────────────
+  cli:
+    name: snapbolt-cli (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/cli
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build native addon
+        run: npm run build -w @think-grid-labs/snapbolt-cli
+
+      - name: Smoke test
+        run: node -e "const cli = require('./packages/cli'); console.log('optimizeImage:', typeof cli.optimizeImage);"
+
+  # ─────────────────────────────────────────────────────────────────
+  # Next.js example — production build (depends on snapbolt + cli)
+  # ─────────────────────────────────────────────────────────────────
+  nextjs-example:
+    name: Next.js example build
+    runs-on: ubuntu-latest
+    needs: [snapbolt, cli]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install all dependencies
+        run: npm ci
+
+      - name: Build snapbolt
+        run: npm run build -w @think-grid-labs/snapbolt
+
+      - name: Build CLI native addon
+        run: npm run build -w @think-grid-labs/snapbolt-cli
+
+      - name: Build Next.js example
+        run: npm run build -w snapbolt-nextjs-example
+        env:
+          NODE_ENV: production

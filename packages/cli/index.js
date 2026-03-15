@@ -310,6 +310,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { optimizeDirectory } = nativeBinding
+const { optimizeImage, optimizeDirectory } = nativeBinding
 
+module.exports.optimizeImage = optimizeImage
 module.exports.optimizeDirectory = optimizeDirectory

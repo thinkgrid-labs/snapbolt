@@ -1,0 +1,250 @@
+name: Publish to npm
+
+# Triggered automatically when a version tag (v*) is pushed.
+# Also manually dispatchable for pre-releases.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "npm dist-tag (e.g. latest, beta, next)"
+        required: true
+        default: latest
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # Guard: build + test everything before publishing
+  # ─────────────────────────────────────────────────────────────────
+  ci-check:
+    name: Verify CI status
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Test Rust workspace
+        run: cargo test --workspace --exclude snapbolt-server
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build snapbolt (WASM + TS)
+        run: npm run build -w @think-grid-labs/snapbolt
+
+      - name: Unit tests
+        run: npm test -w @think-grid-labs/snapbolt
+
+      - name: Build CLI native addon
+        run: npm run build -w @think-grid-labs/snapbolt-cli
+
+  # ─────────────────────────────────────────────────────────────────
+  # Build NAPI native addon on each platform and upload artifacts
+  # ─────────────────────────────────────────────────────────────────
+  build-cli:
+    name: Build CLI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: ci-check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: snapbolt-cli-linux-x64
+          - os: macos-latest
+            artifact: snapbolt-cli-darwin-universal
+          - os: windows-latest
+            artifact: snapbolt-cli-win32-x64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/cli
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build native addon
+        run: npm run build -w @think-grid-labs/snapbolt-cli
+
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: packages/cli/*.node
+          retention-days: 1
+
+  # ─────────────────────────────────────────────────────────────────
+  # Publish @think-grid-labs/snapbolt to npm
+  # ─────────────────────────────────────────────────────────────────
+  publish-snapbolt:
+    name: Publish @think-grid-labs/snapbolt
+    runs-on: ubuntu-latest
+    needs: ci-check
+    permissions:
+      contents: read
+      id-token: write  # required for npm provenance
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build -w @think-grid-labs/snapbolt
+
+      - name: Determine dist-tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "dist_tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          elif echo "${{ github.ref_name }}" | grep -qE '\-(beta|next|rc|alpha)'; then
+            PRE=$(echo "${{ github.ref_name }}" | sed 's/.*-\([a-zA-Z]*\).*/\1/')
+            echo "dist_tag=$PRE" >> "$GITHUB_OUTPUT"
+          else
+            echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish
+        run: npm publish --workspace packages/snapbolt --tag ${{ steps.tag.outputs.dist_tag }} --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────────────
+  # Publish @think-grid-labs/snapbolt-cli (all platforms) to npm
+  # ─────────────────────────────────────────────────────────────────
+  publish-cli:
+    name: Publish @think-grid-labs/snapbolt-cli
+    runs-on: ubuntu-latest
+    needs: [build-cli, publish-snapbolt]
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download all native artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: snapbolt-cli-*
+          path: packages/cli
+          merge-multiple: true
+
+      - name: Determine dist-tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "dist_tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          elif echo "${{ github.ref_name }}" | grep -qE '\-(beta|next|rc|alpha)'; then
+            PRE=$(echo "${{ github.ref_name }}" | sed 's/.*-\([a-zA-Z]*\).*/\1/')
+            echo "dist_tag=$PRE" >> "$GITHUB_OUTPUT"
+          else
+            echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish
+        run: npm publish --workspace packages/cli --tag ${{ steps.tag.outputs.dist_tag }} --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────────────
+  # Create a GitHub Release from the pushed tag
+  # ─────────────────────────────────────────────────────────────────
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [publish-snapbolt, publish-cli]
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            const version = tag.replace(/^v/, '');
+            const isPrerelease = tag.includes('-');
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: tag,
+              body: [
+                '## Install',
+                '',
+                '```bash',
+                `npm install @think-grid-labs/snapbolt@${version}`,
+                '',
+                '# For server-side / Next.js optimization:',
+                `npm install @think-grid-labs/snapbolt-cli@${version}`,
+                '```',
+                '',
+                `See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.`,
+              ].join('\n'),
+              draft: false,
+              prerelease: isPrerelease,
+            });

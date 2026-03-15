@@ -1,0 +1,23 @@
+{
+  "pages": {
+    "/page": [
+      "static/chunks/ed548_next_dist_31f23128._.js",
+      "static/chunks/_e6dfb805._.js",
+      "static/chunks/examples_nextjs_app_globals_7f3637b1.css",
+      "static/chunks/examples_nextjs_app_layout_tsx_1dae8e5a._.js",
+      "static/chunks/ed548_next_dist_client_components_builtin_global-error_093b62a6.js",
+      "static/chunks/examples_nextjs_components_b3de559a._.css",
+      "static/chunks/examples_nextjs_components_95d3ccae._.js",
+      "static/chunks/examples_nextjs_app_page_tsx_093b62a6._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_233a393c._.js",
+      "static/chunks/ed548_next_dist_compiled_react-dom_861ff4e9._.js",
+      "static/chunks/ed548_next_dist_compiled_next-devtools_index_bc5072cd.js",
+      "static/chunks/ed548_next_dist_compiled_2dff5461._.js",
+      "static/chunks/ed548_next_dist_client_7470dd09._.js",
+      "static/chunks/ed548_next_dist_9303cf68._.js",
+      "static/chunks/ed548_@swc_helpers_cjs_c8b6c927._.js",
+      "static/chunks/examples_nextjs_a0ff3932._.js",
+      "static/chunks/turbopack-examples_nextjs_5ff83932._.js"
+    ]
+  }
+}
