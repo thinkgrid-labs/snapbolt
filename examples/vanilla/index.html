@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snapbolt — Vanilla JS Example</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <span class="badge">Snapbolt · Vanilla JS</span>
+      <h1>Client-Side Image Optimization</h1>
+      <p class="lead">
+        Powered by Rust compiled to WebAssembly. No framework, no build step,
+        no server — just a <code>.wasm</code> file and plain JavaScript.
+      </p>
+    </header>
+
+    <hr />
+
+    <!-- Tab nav -->
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="file" role="tab">File Upload</button>
+      <button class="tab" data-tab="url" role="tab">Remote URL</button>
+      <button class="tab" data-tab="server" role="tab">Server (snapbolt-server)</button>
+    </nav>
+
+    <!-- ─── Tab: File Upload ──────────────────────────────── -->
+    <section id="tab-file" class="tab-panel active">
+      <p>Pick a JPEG or PNG. Snapbolt resizes and converts it to WebP entirely in your browser using the Rust WASM encoder.</p>
+
+      <div class="controls">
+        <label class="file-drop" id="fileDrop">
+          <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" />
+          <span id="fileLabel">Click to select an image</span>
+        </label>
+
+        <div class="options">
+          <label>
+            Max width (px)
+            <input type="number" id="fileWidth" value="1200" min="50" max="4000" step="50" />
+          </label>
+          <label>
+            Quality (1–100)
+            <input type="range" id="fileQuality" value="80" min="1" max="100" />
+            <output id="fileQualityVal">80</output>
+          </label>
+        </div>
+      </div>
+
+      <div class="comparison hidden" id="fileComparison">
+        <div class="panel">
+          <div class="panel-label">Original</div>
+          <img id="fileOrigImg" alt="Original" />
+          <div class="size" id="fileOrigSize"></div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="panel">
+          <div class="panel-label">Optimized (WebP)</div>
+          <div class="skeleton hidden" id="fileSkeleton"></div>
+          <img id="fileOptImg" alt="Optimized" class="hidden" />
+          <div class="size" id="fileOptSize"></div>
+        </div>
+      </div>
+
+      <div class="actions hidden" id="fileActions">
+        <a id="fileDownload" class="btn btn-primary" download="optimized.webp">Download WebP</a>
+      </div>
+
+      <p class="error hidden" id="fileError"></p>
+    </section>
+
+    <!-- ─── Tab: Remote URL ───────────────────────────────── -->
+    <section id="tab-url" class="tab-panel hidden">
+      <p>Enter a public image URL. The browser fetches it with CORS, passes the bytes through the WASM encoder, and shows the result.</p>
+
+      <div class="controls">
+        <label class="url-row">
+          Image URL
+          <input
+            type="url"
+            id="urlInput"
+            placeholder="https://example.com/photo.jpg"
+            value="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=90"
+          />
+        </label>
+        <div class="options">
+          <label>
+            Max width (px)
+            <input type="number" id="urlWidth" value="900" min="50" max="4000" step="50" />
+          </label>
+          <label>
+            Quality (1–100)
+            <input type="range" id="urlQuality" value="75" min="1" max="100" />
+            <output id="urlQualityVal">75</output>
+          </label>
+        </div>
+        <button class="btn btn-primary" id="urlOptimizeBtn">Optimize</button>
+      </div>
+
+      <div class="comparison hidden" id="urlComparison">
+        <div class="panel">
+          <div class="panel-label">Original</div>
+          <img id="urlOrigImg" alt="Original" />
+          <div class="size" id="urlOrigSize"></div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="panel">
+          <div class="panel-label">Optimized (WebP)</div>
+          <div class="skeleton hidden" id="urlSkeleton"></div>
+          <img id="urlOptImg" alt="Optimized" class="hidden" />
+          <div class="size" id="urlOptSize"></div>
+        </div>
+      </div>
+
+      <p class="error hidden" id="urlError"></p>
+    </section>
+
+    <!-- ─── Tab: Server ───────────────────────────────────── -->
+    <section id="tab-server" class="tab-panel hidden">
+      <p>
+        Direct requests to a running <strong>snapbolt-server</strong> instance.
+        Start it with <code>cargo run -p snapbolt-server</code> and set
+        <code>ALLOWED_DOMAINS</code> to include the image host.
+      </p>
+
+      <div class="controls">
+        <label class="url-row">
+          Server URL
+          <input type="text" id="serverBase" value="http://localhost:3000" />
+        </label>
+        <label class="url-row">
+          Image URL
+          <input
+            type="url"
+            id="serverImg"
+            value="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=90"
+          />
+        </label>
+        <div class="options">
+          <label>
+            Width (px)
+            <input type="number" id="serverWidth" value="800" min="50" max="4000" step="50" />
+          </label>
+          <label>
+            Quality (1–100)
+            <input type="range" id="serverQuality" value="75" min="1" max="100" />
+            <output id="serverQualityVal">75</output>
+          </label>
+          <label>
+            Format
+            <select id="serverFmt">
+              <option value="webp" selected>webp</option>
+              <option value="jpeg">jpeg</option>
+              <option value="png">png</option>
+              <option value="auto">auto (Accept header)</option>
+            </select>
+          </label>
+        </div>
+        <button class="btn btn-primary" id="serverFetchBtn">Fetch from Server</button>
+      </div>
+
+      <div class="url-display hidden" id="serverUrlDisplay">
+        <code id="serverUrlText"></code>
+      </div>
+
+      <div class="result hidden" id="serverResult">
+        <img id="serverResultImg" alt="Server result" />
+        <div class="size" id="serverResultSize"></div>
+      </div>
+
+      <p class="error hidden" id="serverError"></p>
+    </section>
+
+  </div><!-- /.container -->
+
+  <!--
+    Import map lets us use bare specifier imports without a bundler.
+    Adjust the path if your node_modules are elsewhere.
+  -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@think-grid-labs/snapbolt/browser": "./node_modules/@think-grid-labs/snapbolt/pkg/snapbolt.js"
+      }
+    }
+  </script>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

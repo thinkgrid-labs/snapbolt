@@ -1,0 +1,15 @@
+# Source files
+src/
+tsconfig.json
+
+# Build artifacts (we WANT these, but standard .gitignore excludes them. checking them here ensures we don't accidentally ignore them due to .gitignore fallthrough if we didn't have this file)
+# However, npmignore logic: if this file exists, .gitignore is IGNORED.
+# So we must list everything we want to EXCLLUDE.
+
+node_modules/
+.gitignore
+Cargo.toml
+Cargo.lock
+*.log
+
+# We do NOT list dist/ or pkg/ here, so they will be included.

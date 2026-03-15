@@ -1,6 +1,6 @@
 [package]
 name = "snapbolt-core"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Core logic for snapbolt image optimization"
 license = "MIT"
@@ -10,6 +10,14 @@ image = { version = "0.25", default-features = false, features = ["png", "jpeg",
 thiserror = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+# webp crate uses libwebp-sys (C FFI) — only for native targets, not wasm32
+webp = { version = "0.3", optional = true }
 
 [features]
 default = []
+# Enable lossy WebP encoding via libwebp-sys (native targets only: CLI, server).
+# Do NOT enable for the snapbolt WASM crate — libwebp-sys cannot compile to wasm32.
+# Without this feature, WebP output falls back to the image crate's pure-Rust encoder.
+native = ["webp"]
+# AVIF support requires nasm: brew install nasm (then add ravif + rgb deps)
+

@@ -1,6 +1,6 @@
 {
     "name": "@think-grid-labs/snapbolt",
-    "version": "0.1.3",
+    "version": "0.2.0",
     "description": "Unified image optimization toolkit for the browser and React",
     "main": "./dist/index.js",
     "module": "./dist/index.js",
@@ -8,6 +8,8 @@
     "files": [
         "dist",
         "pkg",
+        "handler.js",
+        "handler.d.ts",
         "README.md"
     ],
     "exports": {
@@ -16,15 +18,25 @@
             "import": "./dist/index.js",
             "default": "./dist/index.js"
         },
+        "./image": {
+            "types": "./dist/image.d.ts",
+            "import": "./dist/image.js",
+            "default": "./dist/image.js"
+        },
         "./browser": {
             "types": "./pkg/snapbolt.d.ts",
             "import": "./pkg/snapbolt.js",
             "default": "./pkg/snapbolt.js"
-        }
+        },
+        "./handler": {
+            "types": "./handler.d.ts",
+            "default": "./handler.js"
+        },
+        "./package.json": "./package.json"
     },
     "scripts": {
         "build": "npm run build:wasm && npm run build:ts",
-        "build:wasm": "npx wasm-pack build --target web --out-dir pkg --release",
+        "build:wasm": "npx wasm-pack build --target web --out-dir pkg --release && rm pkg/.gitignore",
         "build:ts": "tsc",
         "test": "vitest"
     },
@@ -37,18 +49,28 @@
         "wasm",
         "webp"
     ],
-    "author": "DennisP <dennis@thinkgrid-labs.com>",
+    "author": "DennisP <dennis@thinkgrid.dev>",
     "license": "MIT",
     "peerDependencies": {
-        "react": ">=16.8.0"
+        "react": ">=16.8.0",
+        "@think-grid-labs/snapbolt-cli": ">=0.1.0"
+    },
+    "peerDependenciesMeta": {
+        "@think-grid-labs/snapbolt-cli": {
+            "optional": true
+        }
     },
     "devDependencies": {
         "typescript": "^5.0.0",
-        "@types/react": "^18.0.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
         "concurrently": "^8.0.0",
-        "vitest": "^0.34.0",
-        "@testing-library/react": "^14.0.0",
-        "jsdom": "^22.0.0",
+        "vitest": "^2.0.0",
+        "@testing-library/react": "^16.0.0",
+        "@testing-library/dom": "^10.0.0",
+        "jsdom": "^25.0.0",
         "@types/node": "^20.0.0"
     },
     "publishConfig": {

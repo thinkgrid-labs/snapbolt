@@ -1,0 +1,23 @@
+{
+  "name": "snapbolt-nextjs-example",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbo",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@think-grid-labs/snapbolt": "file:../../packages/snapbolt",
+    "@think-grid-labs/snapbolt-cli": "file:../../packages/cli",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}

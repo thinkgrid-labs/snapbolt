@@ -1,9 +1,37 @@
+use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
 use rayon::prelude::*;
-use snapbolt_core::{optimize_buffer, OptimizeOptions};
+use snapbolt_core::{optimize_buffer, OptimizeOptions, OutputFormat};
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
+
+/// Optimize a single image buffer — used by the Next.js API route handler.
+/// Returns the encoded bytes (WebP by default, or the requested format).
+#[napi]
+pub fn optimize_image(
+    input: Buffer,
+    quality: Option<f64>,
+    width: Option<u32>,
+    height: Option<u32>,
+    format: Option<String>,
+) -> napi::Result<Buffer> {
+    let fmt = match format.as_deref() {
+        Some("jpeg") | Some("jpg") => OutputFormat::Jpeg,
+        Some("png") => OutputFormat::Png,
+        _ => OutputFormat::WebP,
+    };
+    let options = OptimizeOptions {
+        quality: quality.unwrap_or(80.0) as f32,
+        width,
+        height,
+        format: fmt,
+    };
+    match optimize_buffer(&input, &options) {
+        Ok((data, _)) => Ok(data.into()),
+        Err(e) => Err(napi::Error::from_reason(e.to_string())),
+    }
+}
 
 #[napi]
 pub fn optimize_directory(path_str: String) -> u32 {
@@ -32,7 +60,7 @@ pub fn optimize_directory(path_str: String) -> u32 {
 
         if let Ok(data) = fs::read(path) {
             let options = OptimizeOptions::default();
-            if let Ok(optimized) = optimize_buffer(&data, &options) {
+            if let Ok((optimized, _mime)) = optimize_buffer(&data, &options) {
                 let mut new_path = path.to_path_buf();
                 new_path.set_extension("webp");
                 let _ = fs::write(new_path, optimized);
