@@ -73,6 +73,11 @@
         "jsdom": "^25.0.0",
         "@types/node": "^20.0.0"
     },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/thinkgrid-labs/snapbolt",
+        "directory": "packages/snapbolt"
+    },
     "publishConfig": {
         "access": "public"
     }
