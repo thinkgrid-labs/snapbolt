@@ -69,6 +69,7 @@
         "concurrently": "^8.0.0",
         "vitest": "^2.0.0",
         "@testing-library/react": "^16.0.0",
+        "@testing-library/dom": "^10.0.0",
         "jsdom": "^25.0.0",
         "@types/node": "^20.0.0"
     },
