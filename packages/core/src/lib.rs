@@ -61,10 +61,22 @@ pub fn optimize_buffer(
     // 3. Encode by format
     match options.format {
         OutputFormat::WebP => {
-            let encoder = webp::Encoder::from_image(&img)
-                .map_err(|e| OptimizerError::EncodeError(e.to_string()))?;
-            let memory = encoder.encode(options.quality);
-            Ok((memory.to_vec(), "image/webp"))
+            // Native: lossy WebP via libwebp-sys (quality-controlled, smaller output).
+            // WASM: pure-Rust encoder from the image crate (no C FFI, wasm32-compatible).
+            #[cfg(feature = "native")]
+            {
+                let encoder = webp::Encoder::from_image(&img)
+                    .map_err(|e| OptimizerError::EncodeError(e.to_string()))?;
+                let memory = encoder.encode(options.quality);
+                Ok((memory.to_vec(), "image/webp"))
+            }
+            #[cfg(not(feature = "native"))]
+            {
+                let mut out = Cursor::new(Vec::new());
+                img.write_to(&mut out, image::ImageFormat::WebP)
+                    .map_err(|e| OptimizerError::EncodeError(e.to_string()))?;
+                Ok((out.into_inner(), "image/webp"))
+            }
         }
 
         // AVIF encoding requires nasm (brew install nasm) + ravif + rgb deps.

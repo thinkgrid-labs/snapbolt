@@ -14,7 +14,7 @@ napi-derive = "2.16"
 walkdir = "2.3"
 rayon = "1.7"
 tokio = { version = "1.28", features = ["full"] }
-snapbolt-core = { path = "../core" }
+snapbolt-core = { path = "../core", features = ["native"] }
 
 [build-dependencies]
 napi-build = "2.1"
