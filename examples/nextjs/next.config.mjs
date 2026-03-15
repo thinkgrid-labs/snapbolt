@@ -1,5 +1,12 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Point Next.js to the monorepo root so it doesn't warn about multiple lockfiles.
+  outputFileTracingRoot: path.join(__dirname, '../../'),
   // Lets Next.js/Turbopack compile the snapbolt ESM package on the client.
   transpilePackages: ['@think-grid-labs/snapbolt'],
 

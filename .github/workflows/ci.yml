@@ -149,3 +149,4 @@ jobs:
         run: npm run build -w snapbolt-nextjs-example
         env:
           NODE_ENV: production
+          NEXT_TELEMETRY_DISABLED: 1
