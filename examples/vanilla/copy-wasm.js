@@ -6,7 +6,7 @@ const path = require("path");
 const src = path.join(
   __dirname,
   "node_modules",
-  "@think-grid-labs",
+  "@thinkgrid",
   "snapbolt",
   "pkg",
   "snapbolt_bg.wasm",
