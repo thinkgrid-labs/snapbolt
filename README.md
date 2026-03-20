@@ -1,4 +1,4 @@
-# @think-grid-labs/snapbolt
+# @thinkgrid/snapbolt
 
 High-performance image optimization for the modern web — powered by Rust and WebAssembly.
 
@@ -22,22 +22,22 @@ The core engine is written in Rust with zero unsafe code, compiles to a ~200KB W
 
 ## The Problem Snapbolt Solves
 
-| Scenario | Without Snapbolt | With Snapbolt |
-|---|---|---|
-| User uploads a 8MB photo | Server decodes + resizes + re-encodes in Node/Sharp | Browser resizes to 1200px WebP before the upload even starts |
-| 1,000 concurrent image resize requests | Node.js + Sharp peaks at ~2GB RAM | Rust microservice handles them in ~80MB with non-blocking async I/O |
-| Build-time asset optimization | Custom webpack plugins or manual scripts | `snapbolt-cli scan ./public` — parallel Rayon processing in one command |
-| Next.js without a server | Must use Vercel's paid image CDN | WASM hook optimizes images entirely in the browser, zero infra cost |
+| Scenario                               | Without Snapbolt                                    | With Snapbolt                                                           |
+| -------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------- |
+| User uploads a 8MB photo               | Server decodes + resizes + re-encodes in Node/Sharp | Browser resizes to 1200px WebP before the upload even starts            |
+| 1,000 concurrent image resize requests | Node.js + Sharp peaks at ~2GB RAM                   | Rust microservice handles them in ~80MB with non-blocking async I/O     |
+| Build-time asset optimization          | Custom webpack plugins or manual scripts            | `snapbolt-cli scan ./public` — parallel Rayon processing in one command |
+| Next.js without a server               | Must use Vercel's paid image CDN                    | WASM hook optimizes images entirely in the browser, zero infra cost     |
 
 ---
 
 ## Packages
 
-| Package | What it does |
-|---|---|
-| **`@think-grid-labs/snapbolt`** | React hook + Vanilla JS WASM bindings for client-side optimization |
-| **`@think-grid-labs/snapbolt-cli`** | Native Node.js CLI for build-time bulk image conversion |
-| **`snapbolt-server`** | Standalone Axum HTTP microservice — a self-hostable alternative to `/_next/image` |
+| Package                       | What it does                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| **`@thinkgrid/snapbolt`**     | React hook + Vanilla JS WASM bindings for client-side optimization                |
+| **`@thinkgrid/snapbolt-cli`** | Native Node.js CLI for build-time bulk image conversion                           |
+| **`snapbolt-server`**         | Standalone Axum HTTP microservice — a self-hostable alternative to `/_next/image` |
 
 ---
 
@@ -51,12 +51,12 @@ The core engine is written in Rust with zero unsafe code, compiles to a ~200KB W
 
 ---
 
-## 1. Browser / React (`@think-grid-labs/snapbolt`)
+## 1. Browser / React (`@thinkgrid/snapbolt`)
 
 ### Installation
 
 ```bash
-npm install @think-grid-labs/snapbolt
+npm install @thinkgrid/snapbolt
 ```
 
 ### Next.js setup (zero extra steps)
@@ -67,7 +67,7 @@ Add two options to `next.config.mjs` — that's it. No file copying, no `postins
 // next.config.mjs
 const nextConfig = {
   // Lets Next.js compile the snapbolt ESM package
-  transpilePackages: ['@think-grid-labs/snapbolt'],
+  transpilePackages: ["@thinkgrid/snapbolt"],
 
   webpack(config) {
     // Tells webpack to handle the WASM binary automatically.
@@ -88,12 +88,15 @@ Vite handles `new URL('...wasm', import.meta.url)` natively — no config needed
 For webpack 5 without Next.js, add the same `asyncWebAssembly` experiment to your `webpack.config.js`.
 
 **Manual fallback** (non-webpack environments or static sites):
+
 ```bash
-npx @think-grid-labs/snapbolt-cli sync ./public
+npx @thinkgrid/snapbolt-cli sync ./public
 ```
+
 Then pass the WASM path to the hook:
+
 ```ts
-useImageOptimizer(src, { wasmUrl: '/snapbolt_bg.wasm' })
+useImageOptimizer(src, { wasmUrl: "/snapbolt_bg.wasm" });
 ```
 
 ---
@@ -101,12 +104,12 @@ useImageOptimizer(src, { wasmUrl: '/snapbolt_bg.wasm' })
 ### React Hook
 
 ```tsx
-import { useImageOptimizer } from '@think-grid-labs/snapbolt';
+import { useImageOptimizer } from "@thinkgrid/snapbolt";
 
 const SmartImage = ({ src }: { src: string }) => {
   const { optimizedUrl, loading, error } = useImageOptimizer(src, {
-    quality: 75,  // 0–100, default 80
-    width: 800,   // max width, preserves aspect ratio
+    quality: 75, // 0–100, default 80
+    width: 800, // max width, preserves aspect ratio
   });
 
   if (loading) return <div className="skeleton" />;
@@ -120,8 +123,8 @@ const SmartImage = ({ src }: { src: string }) => {
 Shrink images on the client before they leave the device. No server CPU, no bandwidth waste.
 
 ```tsx
-import { useImageOptimizer } from '@think-grid-labs/snapbolt';
-import { useState } from 'react';
+import { useImageOptimizer } from "@thinkgrid/snapbolt";
+import { useState } from "react";
 
 const UploadForm = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -138,16 +141,20 @@ const UploadForm = () => {
     const blob = await resp.blob();
 
     const formData = new FormData();
-    formData.append('image', blob, 'photo.webp');
+    formData.append("image", blob, "photo.webp");
 
-    await fetch('/api/upload', { method: 'POST', body: formData });
+    await fetch("/api/upload", { method: "POST", body: formData });
   };
 
   return (
     <div>
-      <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+      />
       <button onClick={handleUpload} disabled={loading || !optimizedUrl}>
-        {loading ? 'Optimizing…' : 'Upload'}
+        {loading ? "Optimizing…" : "Upload"}
       </button>
     </div>
   );
@@ -157,12 +164,12 @@ const UploadForm = () => {
 ### Vanilla JS / Browser
 
 ```ts
-import init, { optimize_image_sync } from '@think-grid-labs/snapbolt/browser';
+import init, { optimize_image_sync } from "@thinkgrid/snapbolt/browser";
 
 async function optimizeToWebP(bytes: Uint8Array, quality = 75): Promise<Blob> {
-  await init('/snapbolt_bg.wasm');
+  await init("/snapbolt_bg.wasm");
   const optimized = optimize_image_sync(bytes, quality);
-  return new Blob([optimized], { type: 'image/webp' });
+  return new Blob([optimized], { type: "image/webp" });
 }
 ```
 
@@ -190,17 +197,18 @@ cargo run --release -p snapbolt-server
 GET /image?url=<encoded-url>&w=<width>&h=<height>&q=<quality>&fmt=<format>
 ```
 
-| Param | Description | Default |
-|---|---|---|
-| `url` | Source image URL (must be in `ALLOWED_DOMAINS`) | required |
-| `w` | Target width in pixels (preserves aspect ratio) | original |
-| `h` | Target height in pixels (preserves aspect ratio) | original |
-| `q` | Quality 1–100 | 80 |
-| `fmt` | `webp` \| `jpeg` \| `png` \| `auto` | `auto` |
+| Param | Description                                      | Default  |
+| ----- | ------------------------------------------------ | -------- |
+| `url` | Source image URL (must be in `ALLOWED_DOMAINS`)  | required |
+| `w`   | Target width in pixels (preserves aspect ratio)  | original |
+| `h`   | Target height in pixels (preserves aspect ratio) | original |
+| `q`   | Quality 1–100                                    | 80       |
+| `fmt` | `webp` \| `jpeg` \| `png` \| `auto`              | `auto`   |
 
 When `fmt=auto`, the format is negotiated from the request's `Accept` header (`image/webp` is preferred).
 
 **Examples:**
+
 ```bash
 # Resize to 800px wide, 75% quality WebP
 curl "http://localhost:3000/image?url=https://example.com/photo.jpg&w=800&q=75&fmt=webp" -o out.webp
@@ -227,32 +235,32 @@ X-Cache:       HIT | MISS
 
 ### Configuration
 
-| Env Var | Description | Default |
-|---|---|---|
-| `PORT` | Listening port | `3000` |
-| `ALLOWED_DOMAINS` | Comma-separated domain allowlist (SSRF protection) | open (warn) |
-| `CACHE_MAX_BYTES` | In-memory cache capacity in bytes | `524288000` (500 MB) |
-| `DEFAULT_QUALITY` | Quality when `q` is not specified | `80` |
+| Env Var           | Description                                        | Default              |
+| ----------------- | -------------------------------------------------- | -------------------- |
+| `PORT`            | Listening port                                     | `3000`               |
+| `ALLOWED_DOMAINS` | Comma-separated domain allowlist (SSRF protection) | open (warn)          |
+| `CACHE_MAX_BYTES` | In-memory cache capacity in bytes                  | `524288000` (500 MB) |
+| `DEFAULT_QUALITY` | Quality when `q` is not specified                  | `80`                 |
 
 > **Security**: Set `ALLOWED_DOMAINS` in production. If unset, the server logs a warning and allows all domains (useful for local development only).
 
 ### Comparison with Next.js Image
 
-| Feature | Next.js `/_next/image` | `snapbolt-server` |
-|---|---|---|
-| WebP output | ✅ via Sharp | ✅ via libwebp (lossy) |
-| Resize with Lanczos | ✅ | ✅ |
-| HTTP caching (ETag + immutable) | ✅ | ✅ |
-| In-process LRU cache | ✅ | ✅ moka (byte-weighted, 1h TTL) |
-| SSRF protection | ✅ `remotePatterns` | ✅ `ALLOWED_DOMAINS` |
-| Content negotiation (`Accept`) | ✅ | ✅ |
-| Memory model | Node.js + Sharp (~high) | Rust async (~low) |
-| Deployable as a single binary | ❌ | ✅ ~15MB |
-| Requires Node.js runtime | ✅ | ❌ |
+| Feature                         | Next.js `/_next/image`  | `snapbolt-server`               |
+| ------------------------------- | ----------------------- | ------------------------------- |
+| WebP output                     | ✅ via Sharp            | ✅ via libwebp (lossy)          |
+| Resize with Lanczos             | ✅                      | ✅                              |
+| HTTP caching (ETag + immutable) | ✅                      | ✅                              |
+| In-process LRU cache            | ✅                      | ✅ moka (byte-weighted, 1h TTL) |
+| SSRF protection                 | ✅ `remotePatterns`     | ✅ `ALLOWED_DOMAINS`            |
+| Content negotiation (`Accept`)  | ✅                      | ✅                              |
+| Memory model                    | Node.js + Sharp (~high) | Rust async (~low)               |
+| Deployable as a single binary   | ❌                      | ✅ ~15MB                        |
+| Requires Node.js runtime        | ✅                      | ❌                              |
 
 ---
 
-## 3. CLI (`@think-grid-labs/snapbolt-cli`)
+## 3. CLI (`@thinkgrid/snapbolt-cli`)
 
 Native Node.js addon for build-time image processing using Rayon parallel workers.
 
@@ -261,7 +269,7 @@ Native Node.js addon for build-time image processing using Rayon parallel worker
 Recursively converts all JPEG/PNG images in a directory to WebP before deployment:
 
 ```bash
-npx @think-grid-labs/snapbolt-cli scan ./public
+npx @thinkgrid/snapbolt-cli scan ./public
 ```
 
 ### Sync WASM Assets
@@ -269,7 +277,7 @@ npx @think-grid-labs/snapbolt-cli scan ./public
 Copies the WASM binary from `node_modules` to your static folder:
 
 ```bash
-npx @think-grid-labs/snapbolt-cli sync ./public
+npx @thinkgrid/snapbolt-cli sync ./public
 ```
 
 ---
@@ -297,28 +305,31 @@ npx @think-grid-labs/snapbolt-cli sync ./public
 
 ### `Module not found` in Next.js
 
-Add `transpilePackages: ['@think-grid-labs/snapbolt']` to `next.config.js`.
+Add `transpilePackages: ['@thinkgrid/snapbolt']` to `next.config.js`.
 
 ### WASM not loading
 
-Ensure `snapbolt_bg.wasm` is in your `public` folder and your bundler is not trying to process it. Run `npx @think-grid-labs/snapbolt-cli sync ./public` to copy it.
+Ensure `snapbolt_bg.wasm` is in your `public` folder and your bundler is not trying to process it. Run `npx @thinkgrid/snapbolt-cli sync ./public` to copy it.
 
 ---
 
 ## Roadmap
 
 ### Short-term
+
 - [ ] SIMD-optimized WASM build for 2× faster encoding on modern browsers
 - [ ] Blur-up placeholder generation (Base64 tiny thumbnails for instant-load UX)
 - [ ] Web Worker offloading to keep the main thread at 60fps during optimization
 - [ ] AVIF output support (requires `nasm` — see note above)
 
 ### Mid-term
+
 - [ ] Smart cropping with saliency detection (keep faces/subjects centered)
 - [ ] `snapbolt-server` Docker image and Helm chart
 - [ ] Vite plugin for build-time image optimization
 
 ### Long-term
+
 - [ ] Cloudflare Workers / Vercel Edge deployment templates
 - [ ] Video thumbnail extraction via WebCodecs
 - [ ] Watermarking and custom filter pipeline
