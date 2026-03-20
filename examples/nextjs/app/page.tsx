@@ -1,13 +1,13 @@
-import SmartImage from '@think-grid-labs/snapbolt/image';
-import UploadDemo from '@/components/UploadDemo';
-import ServerDemo from '@/components/ServerDemo';
+import SmartImage from "@thinkgrid/snapbolt/image";
+import UploadDemo from "@/components/UploadDemo";
+import ServerDemo from "@/components/ServerDemo";
 
 // A real public image to demonstrate URL-based optimization
 const HERO_URL =
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=90';
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=90";
 
 const CARD_URL =
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=85';
+  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=85";
 
 export default function Page() {
   return (
@@ -15,7 +15,7 @@ export default function Page() {
       <span className="badge">Snapbolt Demo</span>
       <h1>SmartImage — Drop-in Performance Component</h1>
       <p>
-        Import once, use everywhere. Automatic WebP conversion, responsive{' '}
+        Import once, use everywhere. Automatic WebP conversion, responsive{" "}
         <code>srcset</code>, lazy loading, blur placeholder, and LCP
         optimization — all in a single component.
       </p>
@@ -34,7 +34,7 @@ export default function Page() {
         <h2>1. Priority / LCP image</h2>
         <p>
           Use <code>priority</code> on the largest above-the-fold image.
-          Snapbolt injects a preload hint and sets{' '}
+          Snapbolt injects a preload hint and sets{" "}
           <code>fetchpriority="high"</code> so the browser fetches it before
           anything else. This directly improves your Lighthouse LCP score.
         </p>
@@ -47,7 +47,7 @@ export default function Page() {
           format="webp"
           priority
           sizes="(max-width: 768px) 100vw, 900px"
-          style={{ borderRadius: 12, width: '100%', height: 'auto' }}
+          style={{ borderRadius: 12, width: "100%", height: "auto" }}
         />
         <pre className="code-hint">{`<SmartImage
   src="https://cdn.example.com/hero.jpg"
@@ -66,7 +66,7 @@ export default function Page() {
       <div className="section">
         <h2>2. Lazy-loaded responsive image</h2>
         <p>
-          Without <code>priority</code>, the image is lazy-loaded.{' '}
+          Without <code>priority</code>, the image is lazy-loaded.{" "}
           <code>sizes</code> tells the browser which srcset entry to pick so it
           never downloads a 4 K image for a 400 px card.
         </p>
@@ -77,7 +77,7 @@ export default function Page() {
           quality={75}
           format="webp"
           sizes="(max-width: 768px) 100vw, 700px"
-          style={{ borderRadius: 8, width: '100%', height: 'auto' }}
+          style={{ borderRadius: 8, width: "100%", height: "auto" }}
         />
         <pre className="code-hint">{`<SmartImage
   src="https://cdn.example.com/forest.jpg"
@@ -97,10 +97,17 @@ export default function Page() {
         <h2>3. Fill mode</h2>
         <p>
           <code>fill</code> works like <code>next/image fill</code> — the image
-          covers its parent container. Set{' '}
-          <code>position: relative</code> and a height on the parent.
+          covers its parent container. Set <code>position: relative</code> and a
+          height on the parent.
         </p>
-        <div style={{ position: 'relative', height: 280, borderRadius: 8, overflow: 'hidden' }}>
+        <div
+          style={{
+            position: "relative",
+            height: 280,
+            borderRadius: 8,
+            overflow: "hidden",
+          }}
+        >
           <SmartImage
             src={HERO_URL}
             alt="Landscape fill example"
@@ -139,17 +146,23 @@ export default function Page() {
       <div className="section">
         <h2>5. Inspect — what SmartImage automates</h2>
         <p>
-          Every <code>&lt;SmartImage&gt;</code> with a <code>serverUrl</code>{' '}
+          Every <code>&lt;SmartImage&gt;</code> with a <code>serverUrl</code>{" "}
           configured builds URLs like the one below automatically — you never
           write them by hand. Use this panel to inspect the raw request,
-          experiment with params, and verify the{' '}
+          experiment with params, and verify the{" "}
           <code>X-Cache: HIT / MISS</code> header once caching kicks in.
         </p>
-        <p style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '-0.5rem' }}>
-          Start snapbolt-server first:{' '}
-          <code>cargo run -p snapbolt-server</code>. Set{' '}
-          <code>NEXT_PUBLIC_SNAPBOLT_SERVER_URL</code> in{' '}
-          <code>.env.local</code> if it&apos;s not on <code>localhost:3000</code>.
+        <p
+          style={{
+            fontSize: "0.85rem",
+            color: "#6b7280",
+            marginTop: "-0.5rem",
+          }}
+        >
+          Start snapbolt-server first: <code>cargo run -p snapbolt-server</code>
+          . Set <code>NEXT_PUBLIC_SNAPBOLT_SERVER_URL</code> in{" "}
+          <code>.env.local</code> if it&apos;s not on{" "}
+          <code>localhost:3000</code>.
         </p>
         <ServerDemo src={HERO_URL} />
       </div>

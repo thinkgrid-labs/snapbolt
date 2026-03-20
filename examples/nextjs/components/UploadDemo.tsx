@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useImageOptimizer } from '@think-grid-labs/snapbolt';
-import { useState, useCallback } from 'react';
-import styles from './UploadDemo.module.css';
+import { useImageOptimizer } from "@thinkgrid/snapbolt";
+import { useState, useCallback } from "react";
+import styles from "./UploadDemo.module.css";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -15,10 +15,10 @@ export default function UploadDemo() {
   const [uploaded, setUploaded] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const { optimizedUrl, loading, error } = useImageOptimizer(
-    file ?? '',
-    { quality: 80, width: 1200 }
-  );
+  const { optimizedUrl, loading, error } = useImageOptimizer(file ?? "", {
+    quality: 80,
+    width: 1200,
+  });
 
   const handleFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = e.target.files?.[0];
@@ -37,7 +37,7 @@ export default function UploadDemo() {
       const blob = await resp.blob();
 
       const formData = new FormData();
-      formData.append('image', blob, 'photo.webp');
+      formData.append("image", blob, "photo.webp");
 
       // Replace with your actual API route
       // await fetch('/api/upload', { method: 'POST', body: formData });
@@ -104,13 +104,21 @@ export default function UploadDemo() {
             {loading && <div className={styles.skeleton} />}
             {!loading && optimizedUrl && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={optimizedUrl} alt="Optimized" className={styles.thumb} />
+              <img
+                src={optimizedUrl}
+                alt="Optimized"
+                className={styles.thumb}
+              />
             )}
             {!loading && error && (
               <p className={styles.error}>Optimization failed: {error}</p>
             )}
             <div className={styles.size}>
-              {optimizedBytes ? formatBytes(optimizedBytes) : loading ? '…' : '—'}
+              {optimizedBytes
+                ? formatBytes(optimizedBytes)
+                : loading
+                  ? "…"
+                  : "—"}
               {savings !== null && (
                 <span className={styles.badge}>{savings}% smaller</span>
               )}
@@ -125,7 +133,7 @@ export default function UploadDemo() {
           disabled={loading || uploading}
           className={styles.uploadBtn}
         >
-          {uploading ? 'Uploading…' : 'Upload Optimized Image'}
+          {uploading ? "Uploading…" : "Upload Optimized Image"}
         </button>
       )}
 
