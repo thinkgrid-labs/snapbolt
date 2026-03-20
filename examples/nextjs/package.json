@@ -8,8 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
-    "@think-grid-labs/snapbolt": "file:../../packages/snapbolt",
-    "@think-grid-labs/snapbolt-cli": "file:../../packages/cli",
+    "@thinkgrid/snapbolt": "file:../../packages/snapbolt",
+    "@thinkgrid/snapbolt-cli": "file:../../packages/cli",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

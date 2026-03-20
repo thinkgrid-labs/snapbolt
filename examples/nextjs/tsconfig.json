@@ -17,10 +17,10 @@
     "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./*"],
-      "@think-grid-labs/snapbolt": ["../../packages/snapbolt/src/index.ts"],
-      "@think-grid-labs/snapbolt/image": ["../../packages/snapbolt/src/image.ts"],
-      "@think-grid-labs/snapbolt/handler": ["../../packages/snapbolt/handler.d.ts"],
-      "@think-grid-labs/snapbolt/*": ["../../packages/snapbolt/src/*"]
+      "@thinkgrid/snapbolt": ["../../packages/snapbolt/src/index.ts"],
+      "@thinkgrid/snapbolt/image": ["../../packages/snapbolt/src/image.ts"],
+      "@thinkgrid/snapbolt/handler": ["../../packages/snapbolt/handler.d.ts"],
+      "@thinkgrid/snapbolt/*": ["../../packages/snapbolt/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

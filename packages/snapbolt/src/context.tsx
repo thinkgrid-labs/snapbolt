@@ -34,7 +34,7 @@ const SnapboltContext = createContext<SnapboltConfig>({});
  *
  * @example
  * // app/layout.tsx
- * import { SnapboltProvider } from '@think-grid-labs/snapbolt';
+ * import { SnapboltProvider } from '@thinkgrid/snapbolt';
  *
  * export default function RootLayout({ children }) {
  *   return (

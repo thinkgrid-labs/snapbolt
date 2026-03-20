@@ -7,6 +7,6 @@
     "dev": "npx serve . --listen 5173"
   },
   "dependencies": {
-    "@think-grid-labs/snapbolt": "file:../../packages/snapbolt"
+    "@thinkgrid/snapbolt": "file:../../packages/snapbolt"
   }
 }

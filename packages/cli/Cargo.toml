@@ -1,9 +1,9 @@
 [package]
 name = "snapbolt-cli"
-version = "0.1.0"
+version = "0.2.1"
 edition = "2021"
 description = "Native high-speed image processing CLI for Snapbolt"
-repository = "https://github.com/ThinkGrid-Labs/snapbolt"
+repository = "https://github.com/thinkgrid-labs/snapbolt"
 
 [lib]
  crate-type = ["cdylib"]

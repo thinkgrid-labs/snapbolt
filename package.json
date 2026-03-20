@@ -1,5 +1,5 @@
 {
-  "name": "@think-grid-labs/snapbolt-monorepo",
+  "name": "@thinkgrid/snapbolt-monorepo",
   "private": true,
   "workspaces": [
     "packages/*",
@@ -7,8 +7,8 @@
   ],
   "scripts": {
     "build": "concurrently \"npm run build:cli\" \"npm run build:snapbolt\"",
-    "build:cli": "npm run build --workspace=@think-grid-labs/snapbolt-cli",
-    "build:snapbolt": "npm run build --workspace=@think-grid-labs/snapbolt",
+    "build:cli": "npm run build --workspace=@thinkgrid/snapbolt-cli",
+    "build:snapbolt": "npm run build --workspace=@thinkgrid/snapbolt",
     "test": "npm test --workspaces --if-present && cargo test --workspace",
     "clean": "rimraf packages/*/dist packages/*/pkg packages/*/target target"
   },

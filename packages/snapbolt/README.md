@@ -1,4 +1,4 @@
-# @think-grid-labs/snapbolt
+# @thinkgrid/snapbolt
 
 A high-performance image optimization toolkit powered by Rust and WebAssembly.
 
@@ -13,7 +13,7 @@ Server-side optimization runs inside your Next.js process. No separate Rust serv
 ### Install
 
 ```bash
-npm install @think-grid-labs/snapbolt @think-grid-labs/snapbolt-cli
+npm install @thinkgrid/snapbolt @thinkgrid/snapbolt-cli
 ```
 
 `snapbolt-cli` is a prebuilt native addon (`.node` binary) that does the heavy lifting on the server. No Rust toolchain required.
@@ -24,17 +24,17 @@ npm install @think-grid-labs/snapbolt @think-grid-labs/snapbolt-cli
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Lets Next.js compile the snapbolt ESM package
-  transpilePackages: ['@think-grid-labs/snapbolt'],
+  transpilePackages: ["@thinkgrid/snapbolt"],
 
   // Keeps the native NAPI addon (.node binary) out of the bundle.
-  // Do NOT add @think-grid-labs/snapbolt here — Turbopack rejects a package in both lists.
-  serverExternalPackages: ['@think-grid-labs/snapbolt-cli'],
+  // Do NOT add @thinkgrid/snapbolt here — Turbopack rejects a package in both lists.
+  serverExternalPackages: ["@thinkgrid/snapbolt-cli"],
 
   // Turbopack (next dev — the default in Next.js 15).
   // WASM is supported natively. resolveExtensions must be non-empty to suppress
   // the "Webpack is configured while Turbopack is not" warning.
   turbopack: {
-    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json', '.wasm'],
+    resolveExtensions: [".tsx", ".ts", ".jsx", ".js", ".mjs", ".json", ".wasm"],
   },
 };
 
@@ -46,7 +46,7 @@ export default nextConfig;
 Create `app/api/image/route.ts`:
 
 ```ts
-export { GET } from '@think-grid-labs/snapbolt/handler';
+export { GET } from "@thinkgrid/snapbolt/handler";
 ```
 
 That's it — this single line adds a `/api/image?url=...&w=...&q=...&fmt=...` endpoint to your app.
@@ -56,15 +56,17 @@ That's it — this single line adds a `/api/image?url=...&w=...&q=...&fmt=...` e
 In `app/layout.tsx`:
 
 ```tsx
-import { SnapboltProvider } from '@think-grid-labs/snapbolt';
+import { SnapboltProvider } from "@thinkgrid/snapbolt";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html>
       <body>
-        <SnapboltProvider serverUrl="/api">
-          {children}
-        </SnapboltProvider>
+        <SnapboltProvider serverUrl="/api">{children}</SnapboltProvider>
       </body>
     </html>
   );
@@ -74,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ### Use `SmartImage`
 
 ```tsx
-import { SmartImage } from '@think-grid-labs/snapbolt/image';
+import { SmartImage } from '@thinkgrid/snapbolt/image';
 
 // Basic — responsive, quality-controlled
 <SmartImage src="/photo.jpg" width={800} height={600} quality={80} alt="Photo" />
@@ -89,13 +91,13 @@ import { SmartImage } from '@think-grid-labs/snapbolt/image';
 
 ### Supported query parameters
 
-| Param | Description | Default |
-|-------|-------------|---------|
-| `url` | Absolute URL of the source image | required |
-| `w` | Max width in pixels | original |
-| `h` | Max height in pixels | original |
-| `q` | Quality 1–100 | `80` |
-| `fmt` | `webp` \| `jpeg` \| `png` \| `auto` | `webp` |
+| Param | Description                         | Default  |
+| ----- | ----------------------------------- | -------- |
+| `url` | Absolute URL of the source image    | required |
+| `w`   | Max width in pixels                 | original |
+| `h`   | Max height in pixels                | original |
+| `q`   | Quality 1–100                       | `80`     |
+| `fmt` | `webp` \| `jpeg` \| `png` \| `auto` | `webp`   |
 
 `fmt=auto` selects AVIF or WebP based on the browser's `Accept` header.
 
@@ -108,7 +110,7 @@ Client-side optimization runs entirely in the browser via WASM — no server req
 ### Install
 
 ```bash
-npm install @think-grid-labs/snapbolt
+npm install @thinkgrid/snapbolt
 ```
 
 Vite handles `.wasm` files natively. No extra config needed.
@@ -116,7 +118,7 @@ Vite handles `.wasm` files natively. No extra config needed.
 ### Copy the WASM file
 
 ```bash
-npx @think-grid-labs/snapbolt-cli sync ./public
+npx @thinkgrid/snapbolt-cli sync ./public
 ```
 
 This copies `snapbolt_bg.wasm` to your `public/` folder so the browser can load it.
@@ -124,7 +126,7 @@ This copies `snapbolt_bg.wasm` to your `public/` folder so the browser can load 
 ### React hook
 
 ```tsx
-import { useImageOptimizer } from '@think-grid-labs/snapbolt';
+import { useImageOptimizer } from "@thinkgrid/snapbolt";
 
 function MyImage({ src }) {
   const { optimizedUrl, loading, error } = useImageOptimizer(src, {
@@ -143,15 +145,15 @@ function MyImage({ src }) {
 ### Vanilla JS
 
 ```js
-import init, { optimize_image_sync } from '@think-grid-labs/snapbolt/browser';
+import init, { optimize_image_sync } from "@thinkgrid/snapbolt/browser";
 
-await init('/snapbolt_bg.wasm');
+await init("/snapbolt_bg.wasm");
 
-const response = await fetch('/photo.jpg');
+const response = await fetch("/photo.jpg");
 const input = new Uint8Array(await response.arrayBuffer());
 const output = optimize_image_sync(input, 80); // (bytes, quality)
 
-const blob = new Blob([output], { type: 'image/webp' });
+const blob = new Blob([output], { type: "image/webp" });
 const url = URL.createObjectURL(blob);
 ```
 
@@ -163,7 +165,7 @@ Browsers block `fetch()` on cross-origin images by default.
 2. Pass `crossOrigin` to the hook:
 
 ```tsx
-useImageOptimizer(src, { crossOrigin: 'anonymous' })
+useImageOptimizer(src, { crossOrigin: "anonymous" });
 ```
 
 ### Memory safety
@@ -171,7 +173,7 @@ useImageOptimizer(src, { crossOrigin: 'anonymous' })
 Processing 4K+ images in WASM can crash mobile browsers. Always pass a `width` to downscale before optimization:
 
 ```tsx
-useImageOptimizer(src, { width: 1200 })
+useImageOptimizer(src, { width: 1200 });
 ```
 
 ### Caching
@@ -179,7 +181,7 @@ useImageOptimizer(src, { width: 1200 })
 Results are cached in the browser's Cache API (`snapbolt-v1`) by default. To disable:
 
 ```tsx
-useImageOptimizer(src, { cache: false })
+useImageOptimizer(src, { cache: false });
 ```
 
 ### Supported formats
@@ -195,13 +197,13 @@ Bulk-optimize images at build time or in CI without writing any code.
 ### No install required
 
 ```bash
-npx @think-grid-labs/snapbolt-cli <command>
+npx @thinkgrid/snapbolt-cli <command>
 ```
 
 Or install globally:
 
 ```bash
-npm install -g @think-grid-labs/snapbolt-cli
+npm install -g @thinkgrid/snapbolt-cli
 ```
 
 ### Commands
@@ -209,7 +211,7 @@ npm install -g @think-grid-labs/snapbolt-cli
 **Scan and convert a folder:**
 
 ```bash
-npx @think-grid-labs/snapbolt-cli scan ./public
+npx @thinkgrid/snapbolt-cli scan ./public
 ```
 
 Converts all JPEG/PNG images to WebP in place. Originals are preserved.
@@ -217,7 +219,7 @@ Converts all JPEG/PNG images to WebP in place. Originals are preserved.
 **Sync WASM file to public folder:**
 
 ```bash
-npx @think-grid-labs/snapbolt-cli sync ./public
+npx @thinkgrid/snapbolt-cli sync ./public
 ```
 
 Copies `snapbolt_bg.wasm` from `node_modules` to your public directory. Run this after install or when upgrading snapbolt.
@@ -233,7 +235,7 @@ Rebuild the local package (`npm run build` in `packages/snapbolt`) or ensure you
 Webpack is trying to bundle the native `.node` addon. Add `serverExternalPackages` and the `config.externals.push()` call to `next.config.mjs` as shown above.
 
 **`Module not found` in Next.js (transpile error)**
-Ensure `transpilePackages: ['@think-grid-labs/snapbolt']` is in your `next.config.mjs`.
+Ensure `transpilePackages: ['@thinkgrid/snapbolt']` is in your `next.config.mjs`.
 
 **`RuntimeError: memory access out of bounds`**
 The image is too large for WASM memory. Pass a `width` option to downscale before processing.

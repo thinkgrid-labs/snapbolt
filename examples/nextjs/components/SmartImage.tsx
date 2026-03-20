@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useImageOptimizer } from '@think-grid-labs/snapbolt';
-import { useState } from 'react';
-import styles from './SmartImage.module.css';
+import { useImageOptimizer } from "@thinkgrid/snapbolt";
+import { useState } from "react";
+import styles from "./SmartImage.module.css";
 
 interface SmartImageProps {
   src: string;
@@ -19,7 +19,7 @@ export default function SmartImage({
   src,
   width = 800,
   quality = 75,
-  alt = '',
+  alt = "",
 }: SmartImageProps) {
   const { optimizedUrl, loading, error } = useImageOptimizer(src, {
     quality,
@@ -94,8 +94,16 @@ export default function SmartImage({
   );
 }
 
-function Stat({ label, bytes, muted }: { label: string; bytes: number | null; muted?: boolean }) {
-  const kb = bytes ? (bytes / 1024).toFixed(1) : '—';
+function Stat({
+  label,
+  bytes,
+  muted,
+}: {
+  label: string;
+  bytes: number | null;
+  muted?: boolean;
+}) {
+  const kb = bytes ? (bytes / 1024).toFixed(1) : "—";
   return (
     <span className={muted ? styles.muted : styles.statValue}>
       {label}: <strong>{kb} KB</strong>

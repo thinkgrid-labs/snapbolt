@@ -5,6 +5,6 @@ import type { NextRequest, NextResponse } from 'next/server';
  *
  * @example
  * // app/api/image/route.ts
- * export { GET } from '@think-grid-labs/snapbolt-cli/handler';
+ * export { GET } from '@thinkgrid/snapbolt-cli/handler';
  */
 export declare function GET(request: NextRequest): Promise<NextResponse>;

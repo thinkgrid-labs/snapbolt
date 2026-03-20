@@ -1,10 +1,10 @@
 [package]
 name = "snapbolt"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "High-performance image optimization toolkit powered by Rust and WASM"
 license = "MIT"
-repository = "https://github.com/ThinkGrid-Labs/snapbolt"
+repository = "https://github.com/thinkgrid-labs/snapbolt"
 
 [lib]
 crate-type = ["cdylib"]
