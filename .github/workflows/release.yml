@@ -48,13 +48,13 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build snapbolt (WASM + TS)
-        run: npm run build -w @think-grid-labs/snapbolt
+        run: npm run build -w @thinkgrid/snapbolt
 
       - name: Unit tests
-        run: npm test -w @think-grid-labs/snapbolt
+        run: npm test -w @thinkgrid/snapbolt
 
       - name: Build CLI native addon
-        run: npm run build -w @think-grid-labs/snapbolt-cli
+        run: npm run build -w @thinkgrid/snapbolt-cli
 
   # ─────────────────────────────────────────────────────────────────
   # Build NAPI native addon on each platform and upload artifacts
@@ -95,7 +95,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build native addon
-        run: npm run build -w @think-grid-labs/snapbolt-cli
+        run: npm run build -w @thinkgrid/snapbolt-cli
 
       - name: Upload native artifact
         uses: actions/upload-artifact@v4
@@ -113,7 +113,7 @@ jobs:
     needs: ci-check
     permissions:
       contents: read
-      id-token: write  # required for npm provenance
+      id-token: write # required for npm provenance
 
     steps:
       - uses: actions/checkout@v4
@@ -160,10 +160,10 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   # ─────────────────────────────────────────────────────────────────
-  # Publish @think-grid-labs/snapbolt-cli (all platforms) to npm
+  # Publish @thinkgrid/snapbolt-cli (all platforms) to npm
   # ─────────────────────────────────────────────────────────────────
   publish-cli:
-    name: Publish @think-grid-labs/snapbolt-cli
+    name: Publish @thinkgrid/snapbolt-cli
     runs-on: ubuntu-latest
     needs: [build-cli, publish-snapbolt]
     permissions:
@@ -237,10 +237,10 @@ jobs:
                 '## Install',
                 '',
                 '```bash',
-                `npm install @think-grid-labs/snapbolt@${version}`,
+                `npm install @thinkgrid/snapbolt@${version}`,
                 '',
                 '# For server-side / Next.js optimization:',
-                `npm install @think-grid-labs/snapbolt-cli@${version}`,
+                `npm install @thinkgrid/snapbolt-cli@${version}`,
                 '```',
                 '',
                 `See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.`,

@@ -103,7 +103,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build native addon
-        run: npm run build -w @think-grid-labs/snapbolt-cli
+        run: npm run build -w @thinkgrid/snapbolt-cli
 
       - name: Smoke test
         run: node -e "const cli = require('./packages/cli'); console.log('optimizeImage:', typeof cli.optimizeImage);"
@@ -140,10 +140,10 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build snapbolt
-        run: npm run build -w @think-grid-labs/snapbolt
+        run: npm run build -w @thinkgrid/snapbolt
 
       - name: Build CLI native addon
-        run: npm run build -w @think-grid-labs/snapbolt-cli
+        run: npm run build -w @thinkgrid/snapbolt-cli
 
       - name: Build Next.js example
         run: npm run build -w snapbolt-nextjs-example
