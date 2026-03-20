@@ -57,13 +57,13 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build WASM
-        run: npm run build:wasm -w @think-grid-labs/snapbolt
+        run: npm run build:wasm -w @thinkgrid/snapbolt
 
       - name: Build TypeScript
-        run: npm run build:ts -w @think-grid-labs/snapbolt
+        run: npm run build:ts -w @thinkgrid/snapbolt
 
       - name: Unit tests
-        run: npm test -w @think-grid-labs/snapbolt
+        run: npm test -w @thinkgrid/snapbolt
 
       - name: Assert dist exists
         run: |
