@@ -24,16 +24,19 @@ export interface UseImageOptimizerResult {
 const toWebP = async (bytes: Uint8Array, quality: number): Promise<Blob> => {
     const srcBlob = new Blob([bytes.slice().buffer], { type: 'image/jpeg' });
     if (typeof document === 'undefined') return srcBlob;
+    // Check canvas 2d support before entering the async image-load path.
+    // jsdom and non-canvas environments return null here, so we fall back
+    // immediately instead of creating a promise that never resolves.
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return srcBlob;
     return new Promise<Blob>((resolve) => {
         const img = new Image();
         const url = URL.createObjectURL(srcBlob);
         img.onload = () => {
             URL.revokeObjectURL(url);
-            const canvas = document.createElement('canvas');
             canvas.width = img.naturalWidth;
             canvas.height = img.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) { resolve(srcBlob); return; }
             ctx.drawImage(img, 0, 0);
             canvas.toBlob(
                 (b) => resolve(b ?? srcBlob),

@@ -12,9 +12,9 @@ vi.stubGlobal('URL', {
 });
 
 // WASM module — avoids compiling actual Rust in tests
-vi.mock('../pkg/snapbolt.js', () => ({
+vi.mock('../pkg/snapbolt', () => ({
     default: vi.fn().mockResolvedValue({}),
-    optimize_image_sync: vi.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
+    optimize_image_sync: vi.fn(() => new Uint8Array([1, 2, 3])),
 }));
 
 // Worker bridge — default: worker unavailable → falls back to main-thread WASM
@@ -42,9 +42,13 @@ function mockFetchOk(blob: Blob, contentType = 'image/png') {
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('useImageOptimizer', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
         (fetch as ReturnType<typeof vi.fn>).mockReset();
+        // Re-apply implementations cleared by vi.clearAllMocks() in vitest 2
+        const wasm = await import('../pkg/snapbolt');
+        vi.mocked(wasm.default).mockResolvedValue({} as never);
+        vi.mocked(wasm.optimize_image_sync).mockImplementation(() => new Uint8Array([1, 2, 3]));
     });
 
     afterEach(() => {
@@ -98,7 +102,7 @@ describe('useImageOptimizer', () => {
     it('falls back to main-thread WASM when worker returns null', async () => {
         const { optimizeViaWorker } = await import('./workerBridge');
         vi.mocked(optimizeViaWorker).mockResolvedValueOnce(null);
-        const { optimize_image_sync } = await import('../pkg/snapbolt.js');
+        const { optimize_image_sync } = await import('../pkg/snapbolt');
         mockFetchOk(makePngBlob());
 
         const { result } = renderHook(() => useImageOptimizer('photo.png', 80));
