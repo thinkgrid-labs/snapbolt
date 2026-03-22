@@ -79,8 +79,9 @@ export const useImageOptimizer = (
             setState(prev => ({ ...prev, loading: true, error: null }));
 
             try {
+                // Cache API requires an http/https URL as the key — encode params as query string.
                 const cacheKey = typeof src === 'string'
-                    ? `snapbolt:${src}:${quality}:${format}:${width || ''}:${height || ''}`
+                    ? `https://snapbolt.cache/v1?url=${encodeURIComponent(src)}&q=${quality}&fmt=${format}&w=${width || ''}&h=${height || ''}`
                     : null;
 
                 if (cache && cacheKey && 'caches' in window) {

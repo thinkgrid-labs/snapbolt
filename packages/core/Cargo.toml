@@ -1,6 +1,6 @@
 [package]
 name = "snapbolt-core"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Core logic for snapbolt image optimization"
 license = "MIT"

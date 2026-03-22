@@ -202,6 +202,11 @@ const FORMAT_DEFAULT_QUALITY: Record<OutputFormat, number> = {
   png:  100,
 };
 
+// URL demo only shows lossy compression formats — JPEG→JPEG re-encoding always
+// expands the file (decode + re-encode at equal or higher quality = larger output).
+// PNG is lossless and makes no sense for already-compressed JPEG sources.
+const URL_DEMO_FORMATS: OutputFormat[] = ['avif', 'webp'];
+
 function UrlDemo() {
   const [selected, setSelected] = useState(SAMPLES[0]);
   const [format, setFormat] = useState<OutputFormat>('avif');
@@ -265,7 +270,7 @@ function UrlDemo() {
           value={format}
           onChange={e => handleFormat(e.target.value as OutputFormat)}
         >
-          {(Object.keys(FORMAT_LABELS) as OutputFormat[]).map(f => (
+          {URL_DEMO_FORMATS.map(f => (
             <option key={f} value={f}>{FORMAT_LABELS[f]}</option>
           ))}
         </select>
