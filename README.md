@@ -1,31 +1,54 @@
+[![npm version](https://img.shields.io/npm/v/@thinkgrid/snapbolt?color=crimson&label=snapbolt)](https://www.npmjs.com/package/@thinkgrid/snapbolt) [![CI](https://img.shields.io/github/actions/workflow/status/thinkgrid-labs/snapbolt/ci.yml?label=CI)](https://github.com/thinkgrid-labs/snapbolt/actions/workflows/ci.yml) [![Bundle size](https://img.shields.io/bundlephobia/minzip/@thinkgrid/snapbolt?label=bundle)](https://bundlephobia.com/package/@thinkgrid/snapbolt) [![License](https://img.shields.io/npm/l/@thinkgrid/snapbolt)](./LICENSE)
+
 # @thinkgrid/snapbolt
 
-High-performance image optimization for the modern web — powered by Rust and WebAssembly.
+High-performance image optimization for any React app — no Vercel required. Powered by Rust and WebAssembly.
 
 > Full usage instructions: **[USAGE.md](./USAGE.md)**
 
 ---
 
-## What is Snapbolt?
+## Why Snapbolt?
 
-Snapbolt is an image optimization toolkit with three deployment modes:
+| Feature | next/image | sharp | Snapbolt |
+|---|:---:|:---:|:---:|
+| Works outside Next.js / Vercel | ✗ | ✓ | ✓ |
+| Browser WASM fallback (no server) | ✗ | ✗ | ✓ |
+| Drop-in `SmartImage` component | ✓ | ✗ | ✓ |
+| Pre-upload optimization (Blob / File) | ✗ | ✗ | ✓ |
+| Self-hosted image CDN server | ✗ | ✗ | ✓ |
 
-| Mode | Package | Best for |
-|---|---|---|
-| **In-app server** | `@thinkgrid/snapbolt` + `@thinkgrid/snapbolt-cli` | Next.js / Express — optimizes images inside your existing server process |
-| **Browser / WASM** | `@thinkgrid/snapbolt` | Vite, CRA, static sites, pre-upload optimization — no server required |
-| **Standalone server** | `snapbolt-server` (Rust binary) | Self-hosted image CDN, decoupled from your Node.js app |
-| **CLI** | `@thinkgrid/snapbolt-cli` | Build-time bulk conversion, CI/CD pipelines |
+**next/image is excellent — if you're on Vercel. Snapbolt is for everyone else.**
 
 ---
 
-## Packages
+## Which mode is right for me?
 
-| Package | What it does |
-|---|---|
-| **`@thinkgrid/snapbolt`** | React `SmartImage` component + `useImageOptimizer` hook + Vanilla JS WASM bindings |
-| **`@thinkgrid/snapbolt-cli`** | Native Node.js NAPI addon — powers the in-app server handler and the CLI |
-| **`snapbolt-server`** | Standalone Axum HTTP microservice (self-hostable `/_next/image` replacement) |
+```
+Are you using Next.js (self-hosted or Vercel)?
+└─ Yes → Use in-app mode (snapbolt-cli handler)  ← fastest, no extra server
+
+Do you need browser-side optimization (pre-upload, offline)?
+└─ Yes → Use WASM mode (@thinkgrid/snapbolt)     ← ~200 KB WASM, no server needed
+
+Do you need a standalone image CDN?
+└─ Yes → Use snapbolt-server (Docker)            ← serves any frontend
+
+Batch-convert images at build time?
+└─ Yes → Use the CLI                             ← npx @thinkgrid/snapbolt-cli scan ./public
+```
+
+---
+
+## Performance
+
+| Image | Original | After Snapbolt | Savings |
+|---|---|---|---|
+| JPEG hero photo | 2.0 MB | ~420 KB | 79% |
+| PNG illustration | 890 KB | ~210 KB | 76% |
+| WebP thumbnail | 95 KB | ~38 KB | 60% |
+
+Tested with `quality=80`, WebP output. Results vary by image content. Run `node benchmarks/run.js ./your-images` to measure your own.
 
 ---
 
@@ -42,9 +65,6 @@ npm install @thinkgrid/snapbolt @thinkgrid/snapbolt-cli
 const nextConfig = {
   transpilePackages: ['@thinkgrid/snapbolt'],
   serverExternalPackages: ['@thinkgrid/snapbolt-cli'],
-  turbopack: {
-    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json', '.wasm'],
-  },
 };
 export default nextConfig;
 ```
@@ -52,19 +72,6 @@ export default nextConfig;
 ```ts
 // app/api/image/route.ts — one line, zero config
 export { GET } from '@thinkgrid/snapbolt/handler';
-```
-
-```tsx
-// app/layout.tsx
-import { SnapboltProvider } from '@thinkgrid/snapbolt';
-
-export default function RootLayout({ children }) {
-  return (
-    <html><body>
-      <SnapboltProvider serverUrl="/api">{children}</SnapboltProvider>
-    </body></html>
-  );
-}
 ```
 
 ```tsx
@@ -102,12 +109,11 @@ npx @thinkgrid/snapbolt-cli sync ./public   # copy WASM binary to public folder
 
 ---
 
-## Supported Formats
+## Try it in the browser
 
-**Input**: JPEG, PNG, WebP
-**Output**: WebP (default), JPEG, PNG
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/thinkgrid-labs/snapbolt/tree/main/examples/vite)
 
-> AVIF output is architecturally supported but disabled by default (requires `nasm`).
+Open the Vite demo in your browser — no install needed.
 
 ---
 
@@ -130,6 +136,12 @@ npx @thinkgrid/snapbolt-cli sync ./public   # copy WASM binary to public folder
 
 ### Later
 - [ ] `snapbolt-server` Helm chart for Kubernetes deployments
+
+---
+
+## Contributing
+
+PRs welcome. For bugs, open an issue — include your OS, Node version, and the error output.
 
 ---
 

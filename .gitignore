@@ -30,6 +30,9 @@ yarn-error.log*
 *.swp
 *.swo
 
+# Drafts
+docs/BLOG_POST.md
+
 # Coverage
 coverage/
 .nyc_output/
