@@ -33,11 +33,12 @@ export interface SmartImageProps
     quality?: number;
 
     /**
-     * Output format. `'auto'` negotiates WebP/AVIF from the Accept header
-     * (server mode only) or always outputs WebP in WASM mode.
-     * @default 'auto'
+     * Output format.
+     * - Server mode: `'auto'` negotiates the best format via the Accept header.
+     * - WASM mode: `'avif'` (default), `'webp'` (routes to AVIF — no C FFI in WASM), `'jpeg'`, `'png'`.
+     * @default 'auto' (server) / 'avif' (WASM)
      */
-    format?: 'webp' | 'jpeg' | 'png' | 'auto';
+    format?: 'avif' | 'webp' | 'jpeg' | 'png' | 'auto';
 
     /**
      * Mark this image as a high-priority LCP element.
@@ -250,7 +251,7 @@ function SmartImageWasm({
     width,
     height,
     quality,
-    format: _format, // WASM always outputs WebP — format prop is accepted but ignored
+    format,
     priority,
     sizes,
     placeholder,
@@ -264,8 +265,10 @@ function SmartImageWasm({
 }: SmartImageProps) {
     const ctx = useSnapboltConfig();
     const q = quality ?? ctx.defaultQuality ?? 80;
+    // 'auto' in server mode means Accept-header negotiation — in WASM mode default to 'avif'.
+    const fmt = (!format || format === 'auto') ? 'avif' : format;
 
-    const { optimizedUrl, loading } = useImageOptimizer(src, { quality: q, width, height });
+    const { optimizedUrl, loading } = useImageOptimizer(src, { quality: q, format: fmt, width, height });
 
     const [imgLoaded, setImgLoaded] = useState(false);
     const showBlur = placeholder === 'blur' && !!blurDataURL && !imgLoaded;

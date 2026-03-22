@@ -193,10 +193,19 @@ const FORMAT_LABELS: Record<OutputFormat, string> = {
   png:  'PNG (lossless)',
 };
 
+// AVIF quality is NOT the same as JPEG quality. ravif q40 ≈ JPEG q75 visually.
+// ravif q60 ≈ JPEG q90+ — excellent quality but larger file than a q60 JPEG.
+const FORMAT_DEFAULT_QUALITY: Record<OutputFormat, number> = {
+  avif: 40,
+  webp: 40,
+  jpeg: 75,
+  png:  100,
+};
+
 function UrlDemo() {
   const [selected, setSelected] = useState(SAMPLES[0]);
-  const [quality, setQuality] = useState(60);
   const [format, setFormat] = useState<OutputFormat>('avif');
+  const [quality, setQuality] = useState(FORMAT_DEFAULT_QUALITY['avif']);
   const [origSize, setOrigSize] = useState<number | null>(null);
   const [optSize, setOptSize] = useState<number | null>(null);
 
@@ -224,16 +233,17 @@ function UrlDemo() {
   }, [optimizedUrl, loading]);
 
   const handleQuality = (q: number) => { setQuality(q); setOptSize(null); };
-  const handleFormat  = (f: OutputFormat) => { setFormat(f); setOptSize(null); };
+  const handleFormat  = (f: OutputFormat) => { setFormat(f); setQuality(FORMAT_DEFAULT_QUALITY[f]); setOptSize(null); };
   const handleSample  = (s: typeof SAMPLES[0]) => { setSelected(s); setOptSize(null); setOrigSize(null); };
 
   return (
     <div style={s.section}>
       <div style={s.sectionTitle}>URL optimization (WASM mode)</div>
       <div style={s.sectionDesc}>
-        Images are encoded to lossy AVIF entirely in Rust WASM inside a background Worker —
-        no server, no uploads, no Canvas. AVIF typically achieves 40–60% smaller files than
-        JPEG at equivalent visual quality.
+        Images are encoded entirely in Rust WASM inside a background Worker — no server, no
+        uploads, no Canvas. AVIF typically achieves 40–60% smaller files than JPEG at
+        equivalent visual quality. Note: AVIF quality 40 ≈ JPEG quality 75 visually — the
+        scales are not the same.
       </div>
 
       <div style={s.sampleRow}>
@@ -317,8 +327,8 @@ function UrlDemo() {
 
 function UploadDemo() {
   const [file, setFile] = useState<File | null>(null);
-  const [quality, setQuality] = useState(80);
   const [format, setFormat] = useState<OutputFormat>('avif');
+  const [quality, setQuality] = useState(FORMAT_DEFAULT_QUALITY['avif']);
   const [origPreview, setOrigPreview] = useState<string | null>(null);
 
   const { optimizedUrl, loading, error } = useImageOptimizer(file ?? '', { quality, format });
@@ -366,7 +376,7 @@ function UploadDemo() {
             <select
               style={s.formatSelect}
               value={format}
-              onChange={e => setFormat(e.target.value as OutputFormat)}
+              onChange={e => { const f = e.target.value as OutputFormat; setFormat(f); setQuality(FORMAT_DEFAULT_QUALITY[f]); }}
             >
               {(Object.keys(FORMAT_LABELS) as OutputFormat[]).map(f => (
                 <option key={f} value={f}>{FORMAT_LABELS[f]}</option>
@@ -444,8 +454,11 @@ export default function App() {
         <div style={s.header}>
           <div style={s.title}>⚡ Snapbolt — WASM Demo</div>
           <div style={s.subtitle}>
-            AVIF encoding running entirely in your browser via Rust + WebAssembly.<br />
-            No server. No uploads. Pure Rust — no Canvas, no C FFI.
+            This demo shows the <strong style={{ color: '#ccc' }}>client-side WASM mode</strong> —
+            images are encoded in your browser via Rust + WebAssembly, no server required.<br />
+            Snapbolt also supports <strong style={{ color: '#ccc' }}>server-side optimization</strong> via
+            the Next.js handler and <code style={{ color: '#aaa', fontSize: 13 }}>serverUrl</code> prop
+            for production pipelines.
           </div>
         </div>
 
