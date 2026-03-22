@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useImageOptimizer } from '@thinkgrid/snapbolt';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -171,44 +171,48 @@ function UrlDemo() {
   const [selected, setSelected] = useState(SAMPLES[0]);
   const [quality, setQuality] = useState(80);
   const [origSize, setOrigSize] = useState<number | null>(null);
-
-  // Measure original file size via a separate fetch (for display only)
-  const measureOrig = useCallback(async (url: string) => {
-    try {
-      const r = await fetch(url);
-      const b = await r.blob();
-      setOrigSize(b.size);
-    } catch {
-      setOrigSize(null);
-    }
-  }, []);
+  const [optSize, setOptSize] = useState<number | null>(null);
 
   const { optimizedUrl, loading, error } = useImageOptimizer(selected.url, {
     quality,
     crossOrigin: 'anonymous',
   });
 
-  // Trigger size measurement when URL changes
-  useState(() => { measureOrig(selected.url); });
-
-  const [optSize, setOptSize] = useState<number | null>(null);
-
-  // Measure optimized blob size
-  if (optimizedUrl && !loading && !error && optSize === null) {
-    fetch(optimizedUrl).then(r => r.blob()).then(b => setOptSize(b.size)).catch(() => {});
-  }
-
-  const handleSample = (s: typeof SAMPLES[0]) => {
-    setSelected(s);
-    setOptSize(null);
+  // Measure original size whenever the selected image changes
+  useEffect(() => {
     setOrigSize(null);
-    measureOrig(s.url);
-  };
+    fetch(selected.url)
+      .then(r => r.blob())
+      .then(b => setOrigSize(b.size))
+      .catch(() => {});
+  }, [selected.url]);
 
+  // Measure optimized size whenever a new optimizedUrl is ready
+  useEffect(() => {
+    if (!optimizedUrl || loading) return;
+    setOptSize(null);
+    fetch(optimizedUrl)
+      .then(r => r.blob())
+      .then(b => setOptSize(b.size))
+      .catch(() => {});
+  }, [optimizedUrl, loading]);
+
+  // Reset optSize when quality changes so stale size isn't shown
   const handleQuality = (q: number) => {
     setQuality(q);
     setOptSize(null);
   };
+
+  const handleSample = (sample: typeof SAMPLES[0]) => {
+    setSelected(sample);
+    setOptSize(null);
+    setOrigSize(null);
+  };
+
+  // If WebP is larger than the original, it's not worth using — show original instead
+  const webpIsLarger = origSize !== null && optSize !== null && optSize >= origSize;
+  const displayUrl   = webpIsLarger ? selected.url : optimizedUrl;
+  const displayLabel = webpIsLarger ? 'Original (JPEG wins)' : 'Optimized (WebP)';
 
   return (
     <div style={s.section}>
@@ -252,12 +256,13 @@ function UrlDemo() {
 
         <div style={s.card}>
           <div style={s.cardLabel}>
-            <span>Optimized (WebP)</span>
-            {optSize && <span style={s.badge('#4ade80')}>{fmtBytes(optSize)}</span>}
+            <span>{displayLabel}</span>
+            {optSize && !webpIsLarger && <span style={s.badge('#4ade80')}>{fmtBytes(optSize)}</span>}
+            {optSize && webpIsLarger  && <span style={s.badge('#888')}>JPEG kept</span>}
           </div>
           {loading && <div style={s.shimmer} />}
-          {!loading && optimizedUrl && (
-            <img src={optimizedUrl} alt="Optimized" style={s.img} />
+          {!loading && displayUrl && (
+            <img src={displayUrl} alt="Result" style={s.img} />
           )}
           {!loading && error && (
             <div style={{ ...s.img, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
@@ -265,10 +270,11 @@ function UrlDemo() {
             </div>
           )}
           <div style={s.meta}>
-            {!loading && origSize && optSize && (
-              <span style={s.savings}>
-                ↓ {savings(origSize, optSize)} · quality={quality}
-              </span>
+            {!loading && origSize && optSize && !webpIsLarger && (
+              <span style={s.savings}>↓ {savings(origSize, optSize)} · quality={quality}</span>
+            )}
+            {!loading && webpIsLarger && (
+              <span style={{ color: '#888' }}>WebP was larger — original JPEG served instead</span>
             )}
             {loading && <span style={{ color: '#555' }}>Encoding via Rust WASM…</span>}
           </div>
@@ -285,7 +291,7 @@ function UploadDemo() {
   const [quality, setQuality] = useState(80);
   const [origPreview, setOrigPreview] = useState<string | null>(null);
 
-  const { optimizedUrl, loading, error } = useImageOptimizer(file, { quality });
+  const { optimizedUrl, loading, error } = useImageOptimizer(file ?? '', { quality });
 
   const handleFile = (f: File) => {
     setFile(f);
