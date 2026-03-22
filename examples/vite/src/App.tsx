@@ -219,8 +219,7 @@ function UrlDemo() {
     <div style={s.section}>
       <div style={s.sectionTitle}>URL optimization (WASM mode)</div>
       <div style={s.sectionDesc}>
-        High-res images (1920×1280) are fetched, compressed to WebP in a background Web Worker, and displayed — no server involved.
-        Best savings on large, uncompressed source images. For already-optimised thumbnails WebP sometimes loses — the fallback serves the original.
+        High-res images are fetched, quality-compressed by Rust WASM in a background Worker, then converted to WebP via the browser's native Canvas encoder — no server involved.
       </div>
 
       <div style={s.sampleRow}>
