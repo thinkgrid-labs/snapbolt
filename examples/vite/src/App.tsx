@@ -178,6 +178,7 @@ function UrlDemo() {
 
   const { optimizedUrl, loading, error } = useImageOptimizer(selected.url, {
     quality,
+    width: 1920,  // cap before canvas — prevents OOM and huge PNG fallbacks on large originals
     crossOrigin: 'anonymous',
   });
 

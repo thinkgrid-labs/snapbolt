@@ -84,7 +84,14 @@ const toWebP = (blob: Blob, quality: number): Promise<Blob> =>
             if (!ctx) { reject(new Error('Canvas not supported')); return; }
             ctx.drawImage(img, 0, 0);
             canvas.toBlob(
-                b => b ? resolve(b) : reject(new Error('Canvas toBlob failed')),
+                b => {
+                    if (!b) { reject(new Error('Canvas toBlob failed')); return; }
+                    if (b.type !== 'image/webp') {
+                        reject(new Error(`Browser canvas does not support WebP output (got ${b.type}). Use a Chromium or modern Safari browser.`));
+                        return;
+                    }
+                    resolve(b);
+                },
                 'image/webp',
                 quality / 100,
             );
