@@ -173,7 +173,7 @@ const SAMPLES = [
 
 function UrlDemo() {
   const [selected, setSelected] = useState(SAMPLES[0]);
-  const [quality, setQuality] = useState(80);
+  const [quality, setQuality] = useState(65);
   const [origSize, setOrigSize] = useState<number | null>(null);
   const [optSize, setOptSize] = useState<number | null>(null);
 
@@ -208,7 +208,7 @@ function UrlDemo() {
       <div style={s.sectionDesc}>
         Images are encoded entirely in your browser via the Canvas API — no server, no uploads.
         Source images are high-quality unoptimized JPEGs (2–4 MB each) from Wikimedia Commons,
-        so you can see real compression savings. At quality 80, expect 60–85% smaller output.
+        so you can see real compression savings. At quality 65, expect 40–70% smaller output.
       </div>
 
       <div style={s.sampleRow}>

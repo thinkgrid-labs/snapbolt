@@ -23,44 +23,9 @@ export interface UseImageOptimizerResult {
     error: string | null;
 }
 
-const resizeImage = async (blob: Blob, maxWidth?: number, maxHeight?: number): Promise<Blob> => {
-    if (!maxWidth && !maxHeight) return blob;
-
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        const url = URL.createObjectURL(blob);
-        img.src = url;
-        img.onload = () => {
-            URL.revokeObjectURL(url);
-            let width = img.width;
-            let height = img.height;
-
-            if (maxWidth && width > maxWidth) {
-                height = Math.round((height * maxWidth) / width);
-                width = maxWidth;
-            }
-            if (maxHeight && height > maxHeight) {
-                width = Math.round((width * maxHeight) / height);
-                height = maxHeight;
-            }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) { reject(new Error('Failed to get canvas context')); return; }
-            ctx.drawImage(img, 0, 0, width, height);
-            canvas.toBlob((b) => {
-                if (b) resolve(b);
-                else reject(new Error('Canvas toBlob failed'));
-            }, blob.type);
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load image for resizing')); };
-    });
-};
-
 /**
  * Encodes a blob to WebP using the browser's Canvas API.
+ * Optionally resizes in the same canvas draw — avoiding a second intermediate encode.
  *
  * This is the only reliable lossy compression path available in wasm32-unknown-unknown:
  *   - libwebp (lossy WebP) requires C FFI — unavailable in browser WASM.
@@ -70,19 +35,25 @@ const resizeImage = async (blob: Blob, maxWidth?: number, maxHeight?: number): P
  * Canvas WebP is the industry standard for browser image compression (Squoosh,
  * browser-image-compression, etc. all use this approach).
  */
-const toWebP = (blob: Blob, quality: number): Promise<Blob> =>
+const toWebP = (blob: Blob, quality: number, maxWidth?: number, maxHeight?: number): Promise<Blob> =>
     new Promise((resolve, reject) => {
         const img = new Image();
         const blobUrl = URL.createObjectURL(blob);
         img.src = blobUrl;
         img.onload = () => {
             URL.revokeObjectURL(blobUrl);
+            let w = img.naturalWidth || img.width || 1;
+            let h = img.naturalHeight || img.height || 1;
+
+            if (maxWidth && w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+            if (maxHeight && h > maxHeight) { w = Math.round((w * maxHeight) / h); h = maxHeight; }
+
             const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width || 1;
-            canvas.height = img.naturalHeight || img.height || 1;
+            canvas.width = w;
+            canvas.height = h;
             const ctx = canvas.getContext('2d');
             if (!ctx) { reject(new Error('Canvas not supported')); return; }
-            ctx.drawImage(img, 0, 0);
+            ctx.drawImage(img, 0, 0, w, h);
             canvas.toBlob(
                 b => {
                     if (!b) { reject(new Error('Canvas toBlob failed')); return; }
@@ -166,12 +137,10 @@ export const useImageOptimizer = (
                     blob = src;
                 }
 
-                if (width || height) blob = await resizeImage(blob, width, height);
-
-                // Encode via Canvas API → WebP.
-                // In browser WASM mode, Canvas is the only reliable lossy compression path.
+                // Encode via Canvas API → WebP, resizing in the same canvas draw to avoid
+                // an intermediate encode (which would inflate file sizes dramatically).
                 // The `format` option is server/CLI only; browser mode always outputs WebP.
-                const optimizedBlob = await toWebP(blob, quality);
+                const optimizedBlob = await toWebP(blob, quality, width, height);
 
                 if (cache && cacheKey && 'caches' in window) {
                     try {
