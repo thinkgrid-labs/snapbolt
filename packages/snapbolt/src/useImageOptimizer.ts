@@ -126,15 +126,22 @@ export const useImageOptimizer = (
                 const bytes = new Uint8Array(buffer);
 
                 // Try worker first (off main thread); fall back to main-thread WASM.
-                let optimizedData = await optimizeViaWorker(bytes, quality, format, wasmUrl);
-                if (!optimizedData) {
+                let workerResult = await optimizeViaWorker(bytes, quality, format, wasmUrl);
+                let optimizedBytes: Uint8Array<ArrayBuffer>;
+                let optimizedMime: string;
+                if (workerResult) {
+                    optimizedBytes = new Uint8Array(workerResult.data);
+                    optimizedMime = workerResult.mime;
+                } else {
                     await init(wasmUrl);
                     const result = optimize_image(bytes, quality, format);
-                    optimizedData = { data: result.data, mime: result.mime };
+                    // Copy into a plain Uint8Array<ArrayBuffer> so Blob constructor is happy.
+                    optimizedBytes = new Uint8Array(result.data);
+                    optimizedMime = result.mime;
                     result.free();
                 }
 
-                const optimizedBlob = new Blob([optimizedData.data], { type: optimizedData.mime });
+                const optimizedBlob = new Blob([optimizedBytes], { type: optimizedMime });
 
                 if (cache && cacheKey && 'caches' in window) {
                     try {

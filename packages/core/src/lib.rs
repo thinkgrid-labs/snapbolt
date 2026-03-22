@@ -146,10 +146,16 @@ mod tests {
         let result = optimize_buffer(MINIMAL_PNG, &options);
 
         assert!(result.is_ok());
-        let (avif_data, mime) = result.unwrap();
+        let (data, mime) = result.unwrap();
 
+        // Default format is WebP. With the `avif` feature it routes to AVIF (pure Rust);
+        // without it, falls back to JPEG passthrough.
+        #[cfg(feature = "avif")]
         assert_eq!(mime, "image/avif");
-        assert!(!avif_data.is_empty());
+        #[cfg(not(feature = "avif"))]
+        assert_eq!(mime, "image/jpeg");
+
+        assert!(!data.is_empty());
     }
 
     #[test]
@@ -207,6 +213,18 @@ mod tests {
     fn test_resize_with_width() {
         let options = OptimizeOptions {
             width: Some(1),
+            format: OutputFormat::Jpeg,
+            ..OptimizeOptions::default()
+        };
+        let result = optimize_buffer(MINIMAL_PNG, &options);
+        assert!(result.is_ok());
+    }
+
+    #[cfg(feature = "avif")]
+    #[test]
+    fn test_resize_with_width_avif() {
+        let options = OptimizeOptions {
+            width: Some(1),
             format: OutputFormat::Avif,
             ..OptimizeOptions::default()
         };
@@ -238,6 +256,7 @@ mod tests {
         assert!(!data.is_empty());
     }
 
+    #[cfg(feature = "avif")]
     #[test]
     fn test_avif_output() {
         let options = OptimizeOptions {
@@ -249,6 +268,17 @@ mod tests {
         let (data, mime) = result.unwrap();
         assert_eq!(mime, "image/avif");
         assert!(!data.is_empty());
+    }
+
+    #[cfg(not(feature = "avif"))]
+    #[test]
+    fn test_avif_returns_unsupported_without_feature() {
+        let options = OptimizeOptions {
+            format: OutputFormat::Avif,
+            ..OptimizeOptions::default()
+        };
+        let result = optimize_buffer(MINIMAL_PNG, &options);
+        assert!(matches!(result, Err(OptimizerError::UnsupportedFormat)));
     }
 
     #[test]
