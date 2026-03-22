@@ -265,8 +265,9 @@ function SmartImageWasm({
 }: SmartImageProps) {
     const ctx = useSnapboltConfig();
     const q = quality ?? ctx.defaultQuality ?? 80;
-    // 'auto' in server mode means Accept-header negotiation — in WASM mode default to 'avif'.
-    const fmt = (!format || format === 'auto') ? 'avif' : format;
+    // 'auto' in server mode means Accept-header negotiation — in WASM mode default to 'webp'
+    // (Canvas API; actual format encoding is always WebP regardless of this value).
+    const fmt = (!format || format === 'auto') ? 'webp' : format;
 
     const { optimizedUrl, loading } = useImageOptimizer(src, { quality: q, format: fmt, width, height });
 

@@ -23,17 +23,17 @@ impl OptimizeResult {
 
 fn parse_format(s: &str) -> OutputFormat {
     match s {
-        "avif" => OutputFormat::Avif,
         "jpeg" | "jpg" => OutputFormat::Jpeg,
         "png" => OutputFormat::Png,
-        // "webp" and unknown values route to WebP (which maps to AVIF in WASM mode
-        // via the core crate's feature-gated logic)
+        // In browser WASM mode, actual WebP encoding is done by the Canvas API on the
+        // main thread. WASM returns passthrough bytes so the caller can canvas-encode.
+        // "avif", "webp", and unknown values all route to WebP (passthrough in WASM mode).
         _ => OutputFormat::WebP,
     }
 }
 
-/// Encode `input` bytes to the requested `format` at the given `quality` (1–100).
-/// Returns an `OptimizeResult` with `.data` (encoded bytes) and `.mime` (MIME type).
+/// Returns input bytes passthrough (WASM mode) or encoded to the requested format
+/// (native/CLI mode with the `native` feature). Canvas API handles WebP on the browser side.
 /// Always call `.free()` on the result after you are done with it.
 #[wasm_bindgen]
 pub fn optimize_image(input: &[u8], quality: f32, format: &str) -> Result<OptimizeResult, JsValue> {
@@ -48,10 +48,8 @@ pub fn optimize_image(input: &[u8], quality: f32, format: &str) -> Result<Optimi
     }
 }
 
-/// Legacy single-value entry point — returns raw bytes only (AVIF in WASM mode).
-/// Prefer `optimize_image` for new code.
+/// Legacy passthrough — returns raw bytes unchanged for canvas encoding downstream.
 #[wasm_bindgen]
-pub fn optimize_image_sync(input: &[u8], quality: f32) -> Result<Vec<u8>, JsValue> {
-    let result = optimize_image(input, quality, "avif")?;
-    Ok(result.data)
+pub fn optimize_image_sync(input: &[u8], _quality: f32) -> Vec<u8> {
+    input.to_vec()
 }

@@ -154,20 +154,6 @@ const s = {
     cursor: 'pointer',
     transition: 'all 0.15s',
   }) as React.CSSProperties,
-  formatSelect: {
-    background: '#1e1e1e',
-    border: '1px solid #333',
-    borderRadius: 6,
-    padding: '5px 10px',
-    fontSize: 13,
-    color: '#ccc',
-    cursor: 'pointer',
-  } as React.CSSProperties,
-  formatHint: {
-    fontSize: 12,
-    color: '#666',
-    fontStyle: 'italic' as const,
-  } as React.CSSProperties,
 };
 
 // ── Sample images (via picsum.photos — free, CORS-enabled) ────────────────────
@@ -182,41 +168,14 @@ const SAMPLES = [
 
 // ── URL demo section ──────────────────────────────────────────────────────────
 
-type OutputFormat = 'avif' | 'webp' | 'jpeg' | 'png';
-
-// In WASM mode, lossy WebP (libwebp C FFI) is unavailable — requests for 'webp'
-// transparently route to AVIF (pure Rust rav1e). The returned mime is 'image/avif'.
-const FORMAT_LABELS: Record<OutputFormat, string> = {
-  avif: 'AVIF',
-  webp: 'WebP → AVIF *',
-  jpeg: 'JPEG',
-  png:  'PNG (lossless)',
-};
-
-// AVIF quality is NOT the same as JPEG quality. ravif q40 ≈ JPEG q75 visually.
-// ravif q60 ≈ JPEG q90+ — excellent quality but larger file than a q60 JPEG.
-const FORMAT_DEFAULT_QUALITY: Record<OutputFormat, number> = {
-  avif: 40,
-  webp: 40,
-  jpeg: 75,
-  png:  100,
-};
-
-// URL demo only shows lossy compression formats — JPEG→JPEG re-encoding always
-// expands the file (decode + re-encode at equal or higher quality = larger output).
-// PNG is lossless and makes no sense for already-compressed JPEG sources.
-const URL_DEMO_FORMATS: OutputFormat[] = ['avif', 'webp'];
-
 function UrlDemo() {
   const [selected, setSelected] = useState(SAMPLES[0]);
-  const [format, setFormat] = useState<OutputFormat>('avif');
-  const [quality, setQuality] = useState(FORMAT_DEFAULT_QUALITY['avif']);
+  const [quality, setQuality] = useState(80);
   const [origSize, setOrigSize] = useState<number | null>(null);
   const [optSize, setOptSize] = useState<number | null>(null);
 
   const { optimizedUrl, loading, error } = useImageOptimizer(selected.url, {
     quality,
-    format,
     crossOrigin: 'anonymous',
   });
 
@@ -237,18 +196,15 @@ function UrlDemo() {
       .catch(() => {});
   }, [optimizedUrl, loading]);
 
-  const handleQuality = (q: number) => { setQuality(q); setOptSize(null); };
-  const handleFormat  = (f: OutputFormat) => { setFormat(f); setQuality(FORMAT_DEFAULT_QUALITY[f]); setOptSize(null); };
-  const handleSample  = (s: typeof SAMPLES[0]) => { setSelected(s); setOptSize(null); setOrigSize(null); };
+  const handleSample = (s: typeof SAMPLES[0]) => { setSelected(s); setOptSize(null); setOrigSize(null); };
 
   return (
     <div style={s.section}>
       <div style={s.sectionTitle}>URL optimization (WASM mode)</div>
       <div style={s.sectionDesc}>
-        Images are encoded entirely in Rust WASM inside a background Worker — no server, no
-        uploads, no Canvas. AVIF typically achieves 40–60% smaller files than JPEG at
-        equivalent visual quality. Note: AVIF quality 40 ≈ JPEG quality 75 visually — the
-        scales are not the same.
+        Images are encoded entirely in your browser via the Canvas API — no server, no uploads.
+        Snapbolt fetches the source image, draws it to a canvas, and exports WebP at the chosen
+        quality. Typically 30–60% smaller than the original JPEG.
       </div>
 
       <div style={s.sampleRow}>
@@ -264,31 +220,15 @@ function UrlDemo() {
       </div>
 
       <div style={s.qualityRow}>
-        <span style={{ color: '#888' }}>Format</span>
-        <select
-          style={s.formatSelect}
-          value={format}
-          onChange={e => handleFormat(e.target.value as OutputFormat)}
-        >
-          {URL_DEMO_FORMATS.map(f => (
-            <option key={f} value={f}>{FORMAT_LABELS[f]}</option>
-          ))}
-        </select>
         <span style={{ color: '#888' }}>Quality</span>
         <input
           type="range" min={10} max={100} step={5}
           value={quality}
           style={s.slider}
-          onChange={e => handleQuality(Number(e.target.value))}
+          onChange={e => { setQuality(Number(e.target.value)); setOptSize(null); }}
         />
         <span style={s.pill}>{quality}</span>
       </div>
-      {format === 'webp' && (
-        <div style={{ ...s.sectionDesc, marginBottom: 12 }}>
-          * WebP lossy encoding requires C FFI (libwebp) — unavailable in WASM. Snapbolt
-          transparently routes to AVIF (pure Rust rav1e), which is smaller and higher quality.
-        </div>
-      )}
 
       <div style={s.grid}>
         <div style={s.card}>
@@ -302,7 +242,7 @@ function UrlDemo() {
 
         <div style={s.card}>
           <div style={s.cardLabel}>
-            <span>Optimized ({FORMAT_LABELS[format]})</span>
+            <span>Optimized (WebP)</span>
             {optSize && <span style={s.badge('#4ade80')}>{fmtBytes(optSize)}</span>}
           </div>
           {loading && <div style={s.shimmer} />}
@@ -313,12 +253,12 @@ function UrlDemo() {
             </div>
           )}
           <div style={s.meta}>
-            {loading && <span style={{ color: '#555' }}>Encoding via Rust WASM…</span>}
+            {loading && <span style={{ color: '#555' }}>Encoding via Canvas API…</span>}
             {!loading && origSize && optSize && (
               <span style={optSize < origSize ? s.savings : { color: '#f87171' }}>
                 {optSize < origSize
                   ? `↓ ${savings(origSize, optSize)} · quality=${quality}`
-                  : `↑ ${savings(optSize, origSize)} larger — try lower quality or AVIF`}
+                  : `↑ file larger — try a lower quality value`}
               </span>
             )}
           </div>
@@ -332,11 +272,10 @@ function UrlDemo() {
 
 function UploadDemo() {
   const [file, setFile] = useState<File | null>(null);
-  const [format, setFormat] = useState<OutputFormat>('avif');
-  const [quality, setQuality] = useState(FORMAT_DEFAULT_QUALITY['avif']);
+  const [quality, setQuality] = useState(80);
   const [origPreview, setOrigPreview] = useState<string | null>(null);
 
-  const { optimizedUrl, loading, error } = useImageOptimizer(file ?? '', { quality, format });
+  const { optimizedUrl, loading, error } = useImageOptimizer(file ?? '', { quality });
 
   const handleFile = (f: File) => {
     setFile(f);
@@ -355,7 +294,7 @@ function UploadDemo() {
     <div style={s.section}>
       <div style={s.sectionTitle}>Pre-upload compression</div>
       <div style={s.sectionDesc}>
-        Drop a photo from your device. It's compressed in the browser before upload — nothing leaves your machine.
+        Drop a photo from your device. It's compressed to WebP in the browser before upload — nothing leaves your machine.
       </div>
 
       {!file ? (
@@ -377,16 +316,6 @@ function UploadDemo() {
       ) : (
         <>
           <div style={s.qualityRow}>
-            <span style={{ color: '#888' }}>Format</span>
-            <select
-              style={s.formatSelect}
-              value={format}
-              onChange={e => { const f = e.target.value as OutputFormat; setFormat(f); setQuality(FORMAT_DEFAULT_QUALITY[f]); }}
-            >
-              {(Object.keys(FORMAT_LABELS) as OutputFormat[]).map(f => (
-                <option key={f} value={f}>{FORMAT_LABELS[f]}</option>
-              ))}
-            </select>
             <span style={{ color: '#888' }}>Quality</span>
             <input
               type="range" min={10} max={100} step={5}
@@ -415,11 +344,11 @@ function UploadDemo() {
 
             <div style={s.card}>
               <div style={s.cardLabel}>
-                <span>Optimized ({FORMAT_LABELS[format]})</span>
+                <span>Optimized (WebP)</span>
                 {optimizedUrl && !loading && (
                   <a
                     href={optimizedUrl}
-                    download={`optimized.${format === 'webp' ? 'avif' : format}`}
+                    download="optimized.webp"
                     style={{ ...s.badge('#3b82f6'), textDecoration: 'none' }}
                   >
                     ↓ Download
@@ -460,10 +389,10 @@ export default function App() {
           <div style={s.title}>⚡ Snapbolt — WASM Demo</div>
           <div style={s.subtitle}>
             This demo shows the <strong style={{ color: '#ccc' }}>client-side WASM mode</strong> —
-            images are encoded in your browser via Rust + WebAssembly, no server required.<br />
+            images are compressed to WebP in your browser via the Canvas API, no server required.<br />
             Snapbolt also supports <strong style={{ color: '#ccc' }}>server-side optimization</strong> via
             the Next.js handler and <code style={{ color: '#aaa', fontSize: 13 }}>serverUrl</code> prop
-            for production pipelines.
+            for production pipelines with AVIF/WebP/JPEG format control.
           </div>
         </div>
 
