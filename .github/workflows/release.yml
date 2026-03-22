@@ -73,9 +73,9 @@ jobs:
           - os: macos-latest
             artifact: snapbolt-cli-darwin-arm64
             target: aarch64-apple-darwin
-          - os: macos-13
+          - os: macos-latest
             artifact: snapbolt-cli-darwin-x64
-            target: x86_64-apple-darwin
+            target: x86_64-apple-darwin   # cross-compiled from ARM64 runner
           - os: windows-latest
             artifact: snapbolt-cli-win32-x64
             target: x86_64-pc-windows-msvc
@@ -103,7 +103,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build native addon
-        run: npm run build -w @thinkgrid/snapbolt-cli
+        run: cd packages/cli && npx napi build --platform --release --target ${{ matrix.target }}
 
       - name: Upload native artifact
         uses: actions/upload-artifact@v4
