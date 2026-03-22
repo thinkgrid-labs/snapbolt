@@ -179,7 +179,6 @@ function UrlDemo() {
     crossOrigin: 'anonymous',
   });
 
-  // Measure original size whenever the selected image changes
   useEffect(() => {
     setOrigSize(null);
     fetch(selected.url)
@@ -188,7 +187,6 @@ function UrlDemo() {
       .catch(() => {});
   }, [selected.url]);
 
-  // Measure optimized size whenever a new optimizedUrl is ready
   useEffect(() => {
     if (!optimizedUrl || loading) return;
     setOptSize(null);
@@ -198,28 +196,15 @@ function UrlDemo() {
       .catch(() => {});
   }, [optimizedUrl, loading]);
 
-  // Reset optSize when quality changes so stale size isn't shown
-  const handleQuality = (q: number) => {
-    setQuality(q);
-    setOptSize(null);
-  };
-
-  const handleSample = (sample: typeof SAMPLES[0]) => {
-    setSelected(sample);
-    setOptSize(null);
-    setOrigSize(null);
-  };
-
-  // If WebP is larger than the original, it's not worth using — show original instead
-  const webpIsLarger = origSize !== null && optSize !== null && optSize >= origSize;
-  const displayUrl   = webpIsLarger ? selected.url : optimizedUrl;
-  const displayLabel = webpIsLarger ? 'Original (JPEG wins)' : 'Optimized (WebP)';
+  const handleQuality = (q: number) => { setQuality(q); setOptSize(null); };
+  const handleSample  = (s: typeof SAMPLES[0]) => { setSelected(s); setOptSize(null); setOrigSize(null); };
 
   return (
     <div style={s.section}>
       <div style={s.sectionTitle}>URL optimization (WASM mode)</div>
       <div style={s.sectionDesc}>
-        High-res images are fetched, quality-compressed by Rust WASM in a background Worker, then converted to WebP via the browser's native Canvas encoder — no server involved.
+        Images are decoded by Rust WASM in a background Worker, then re-encoded to lossy WebP via
+        the browser's Canvas encoder — no server, no uploads.
       </div>
 
       <div style={s.sampleRow}>
@@ -252,32 +237,30 @@ function UrlDemo() {
             {origSize && <span style={{ color: '#aaa', fontSize: 12 }}>{fmtBytes(origSize)}</span>}
           </div>
           <img src={selected.url} alt="Original" style={s.img} crossOrigin="anonymous" />
-          <div style={s.meta}>Source from picsum.photos</div>
+          <div style={s.meta}>Source from picsum.photos · 1920×1280</div>
         </div>
 
         <div style={s.card}>
           <div style={s.cardLabel}>
-            <span>{displayLabel}</span>
-            {optSize && !webpIsLarger && <span style={s.badge('#4ade80')}>{fmtBytes(optSize)}</span>}
-            {optSize && webpIsLarger  && <span style={s.badge('#888')}>JPEG kept</span>}
+            <span>Optimized (WebP)</span>
+            {optSize && <span style={s.badge('#4ade80')}>{fmtBytes(optSize)}</span>}
           </div>
           {loading && <div style={s.shimmer} />}
-          {!loading && displayUrl && (
-            <img src={displayUrl} alt="Result" style={s.img} />
-          )}
+          {!loading && optimizedUrl && <img src={optimizedUrl} alt="Result" style={s.img} />}
           {!loading && error && (
             <div style={{ ...s.img, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
               <span style={s.error}>⚠ {error}</span>
             </div>
           )}
           <div style={s.meta}>
-            {!loading && origSize && optSize && !webpIsLarger && (
-              <span style={s.savings}>↓ {savings(origSize, optSize)} · quality={quality}</span>
-            )}
-            {!loading && webpIsLarger && (
-              <span style={{ color: '#888' }}>WebP was larger — original JPEG served instead</span>
-            )}
             {loading && <span style={{ color: '#555' }}>Encoding via Rust WASM…</span>}
+            {!loading && origSize && optSize && (
+              <span style={optSize < origSize ? s.savings : { color: '#f87171' }}>
+                {optSize < origSize
+                  ? `↓ ${savings(origSize, optSize)} · quality=${quality}`
+                  : `↑ ${savings(optSize, origSize)} larger — lower quality to win`}
+              </span>
+            )}
           </div>
         </div>
       </div>
