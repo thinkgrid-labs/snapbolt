@@ -11,6 +11,21 @@
 
 ---
 
+## Next.js vs Vite — key differences
+
+| | **Next.js (server mode)** | **Vite / browser WASM** |
+|---|---|---|
+| Where optimization runs | Server (Node.js process) | Browser (Canvas API) |
+| Output formats | AVIF, WebP, JPEG, PNG — all work | **WebP only** |
+| `format` prop / option | Fully respected | Ignored — always WebP |
+| Requires `snapbolt-cli`? | Yes (native encoder) | No |
+| Requires a server? | Yes — Next.js API route | No |
+| Best for | Production LCP, SEO, all formats | Pre-upload compression, static sites, no-server setups |
+
+> **Why WebP-only in the browser?** `wasm32-unknown-unknown` cannot link C libraries, so `libwebp` (lossy WebP) is unavailable. AVIF via `rav1e` compiles to WASM but its quality/quantizer settings are broken in single-threaded mode. The browser's Canvas API (`canvas.toBlob('image/webp', quality)`) is the only reliable lossy path — the same approach used by Squoosh and browser-image-compression.
+
+---
+
 ## Next.js (App Router)
 
 Snapbolt runs image optimization inside your Next.js process via a native NAPI addon. No separate server needed.
@@ -169,7 +184,9 @@ import SmartImage from '@thinkgrid/snapbolt/image';
 
 ## Vite / Vanilla JS (browser WASM)
 
-No server required. Images are optimized entirely in the browser via a ~200KB Rust/WASM module.
+No server required. Images are compressed to **WebP** in the browser via the Canvas API.
+
+> **Output is always WebP** — the `format` option is ignored in browser mode. For AVIF, JPEG, or PNG output, use [server mode (Next.js)](#nextjs-app-router) or the [standalone server](#standalone-rust-server-snapbolt-server).
 
 ### 1. Install
 
@@ -191,9 +208,10 @@ experiments: { asyncWebAssembly: true }
 import { useImageOptimizer } from '@thinkgrid/snapbolt';
 
 function OptimizedImage({ src }: { src: string }) {
+  // Output is always WebP via Canvas API — `format` is a no-op in browser mode.
   const { optimizedUrl, loading, error } = useImageOptimizer(src, {
     quality: 80,
-    width: 1200,  // downscale before WASM — avoids OOM on mobile for large images
+    width: 1200,  // downscale before encoding — avoids OOM on mobile for large images
     cache: true,  // caches result in Cache API (default: true)
   });
 
@@ -406,7 +424,7 @@ Run this after install or on upgrades if you're manually serving the WASM file.
 | `width` | `number` | — | Width in px — prevents CLS |
 | `height` | `number` | — | Height in px — prevents CLS |
 | `quality` | `number` | `80` | Output quality 1–100 |
-| `format` | `'webp' \| 'jpeg' \| 'png' \| 'auto'` | `'auto'` | Output format |
+| `format` | `'webp' \| 'avif' \| 'jpeg' \| 'png' \| 'auto'` | `'auto'` | Output format. **Server/CLI mode only** — ignored in browser WASM mode (always WebP via Canvas). |
 | `priority` | `boolean` | `false` | LCP image — adds `fetchpriority="high"`, `loading="eager"`, and a `<link rel="preload">` |
 | `sizes` | `string` | `'100vw'` | CSS `sizes` attribute for responsive `srcset` |
 | `placeholder` | `'blur' \| 'empty'` | `'empty'` | Show blur overlay while loading |

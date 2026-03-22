@@ -111,6 +111,8 @@ const { optimizedUrl, loading } = useImageOptimizer(src, {
 });
 ```
 
+> **Output is always WebP** in browser WASM mode regardless of the `format` option. See [Browser WASM limitations](#browser-wasm-limitations) below.
+
 ### Vanilla JS
 
 ```ts
@@ -119,6 +121,27 @@ import init, { optimize_image_sync } from '@thinkgrid/snapbolt/browser';
 await init();
 const output = optimize_image_sync(inputBytes, 80);
 ```
+
+---
+
+## Browser WASM limitations
+
+When running in the browser (`wasm32-unknown-unknown`), Snapbolt can only produce **WebP** output. This is an intentional design choice, not a bug.
+
+| Encoder | Why unavailable in WASM |
+|---|---|
+| **libwebp** (lossy WebP) | Requires C FFI — cannot link in `wasm32-unknown-unknown` |
+| **rav1e / ravif** (AVIF) | Compiles to WASM, but the quantizer settings are broken in single-threaded mode — produces near-lossless output regardless of quality |
+
+**How it works instead:** Snapbolt uses the browser's built-in Canvas API (`canvas.toBlob('image/webp', quality/100)`) for lossy WebP encoding. This is the same approach used by [Squoosh](https://squoosh.app) and [browser-image-compression](https://github.com/Donaldcwl/browser-image-compression).
+
+### What the `format` option controls
+
+| Mode | `format` option |
+|---|---|
+| **Browser WASM** (`useImageOptimizer`, `SmartImage` with no `serverUrl`) | Ignored — output is always WebP via Canvas |
+| **Server mode** (`SmartImage` with `serverUrl`, or Next.js handler) | Fully supported — `avif`, `webp`, `jpeg`, `png`, `auto` |
+| **CLI / native** (`snapbolt-cli`, server binary) | Fully supported — uses native Rust encoders with C FFI |
 
 ---
 

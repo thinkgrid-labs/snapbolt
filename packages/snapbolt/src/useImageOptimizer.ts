@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import init, { optimize_image } from '../pkg/snapbolt';
-import { optimizeViaWorker } from './workerBridge';
 
 export interface ImageOptimizerOptions {
     quality?: number;
+    /**
+     * Output format.
+     * In browser WASM mode this option is **ignored** — output is always WebP via
+     * the browser's Canvas API (the only reliable lossy path in wasm32-unknown-unknown).
+     * The format option takes effect in server mode and native/CLI mode only.
+     */
     format?: 'webp' | 'avif' | 'jpeg' | 'png';
     crossOrigin?: 'anonymous' | 'use-credentials';
+    /** @deprecated No longer used in browser WASM mode. */
     wasmUrl?: string;
     width?: number;
     height?: number;
@@ -54,6 +59,39 @@ const resizeImage = async (blob: Blob, maxWidth?: number, maxHeight?: number): P
     });
 };
 
+/**
+ * Encodes a blob to WebP using the browser's Canvas API.
+ *
+ * This is the only reliable lossy compression path available in wasm32-unknown-unknown:
+ *   - libwebp (lossy WebP) requires C FFI — unavailable in browser WASM.
+ *   - rav1e (AVIF) compiles to WASM but its quantizer settings are broken in
+ *     single-threaded mode, producing near-lossless output regardless of quality.
+ *
+ * Canvas WebP is the industry standard for browser image compression (Squoosh,
+ * browser-image-compression, etc. all use this approach).
+ */
+const toWebP = (blob: Blob, quality: number): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+        const img = new Image();
+        const blobUrl = URL.createObjectURL(blob);
+        img.src = blobUrl;
+        img.onload = () => {
+            URL.revokeObjectURL(blobUrl);
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width || 1;
+            canvas.height = img.height || 1;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { reject(new Error('Canvas not supported')); return; }
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(
+                b => b ? resolve(b) : reject(new Error('Canvas toBlob failed')),
+                'image/webp',
+                quality / 100,
+            );
+        };
+        img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error('Failed to load image')); };
+    });
+
 export const useImageOptimizer = (
     src: string | Blob,
     optionsOrQuality: number | ImageOptimizerOptions = {}
@@ -61,7 +99,7 @@ export const useImageOptimizer = (
     const options: ImageOptimizerOptions =
         typeof optionsOrQuality === 'number' ? { quality: optionsOrQuality } : optionsOrQuality;
 
-    const { quality = 80, format = 'avif', crossOrigin, wasmUrl, width, height, cache = true } = options;
+    const { quality = 80, format = 'webp', crossOrigin, width, height, cache = true } = options;
 
     const [state, setState] = useState<UseImageOptimizerResult>({
         optimizedUrl: null,
@@ -123,32 +161,16 @@ export const useImageOptimizer = (
 
                 if (width || height) blob = await resizeImage(blob, width, height);
 
-                const buffer = await blob.arrayBuffer();
-                const bytes = new Uint8Array(buffer);
-
-                // Try worker first (off main thread); fall back to main-thread WASM.
-                let workerResult = await optimizeViaWorker(bytes, quality, format, wasmUrl);
-                let optimizedBytes: Uint8Array<ArrayBuffer>;
-                let optimizedMime: string;
-                if (workerResult) {
-                    optimizedBytes = new Uint8Array(workerResult.data);
-                    optimizedMime = workerResult.mime;
-                } else {
-                    await init(wasmUrl);
-                    const result = optimize_image(bytes, quality, format);
-                    // Copy into a plain Uint8Array<ArrayBuffer> so Blob constructor is happy.
-                    optimizedBytes = new Uint8Array(result.data);
-                    optimizedMime = result.mime;
-                    result.free();
-                }
-
-                const optimizedBlob = new Blob([optimizedBytes], { type: optimizedMime });
+                // Encode via Canvas API → WebP.
+                // In browser WASM mode, Canvas is the only reliable lossy compression path.
+                // The `format` option is server/CLI only; browser mode always outputs WebP.
+                const optimizedBlob = await toWebP(blob, quality);
 
                 if (cache && cacheKey && 'caches' in window) {
                     try {
                         const cacheStorage = await caches.open('snapbolt-v1');
                         await cacheStorage.put(cacheKey, new Response(optimizedBlob, {
-                            headers: new Headers({ 'Content-Type': optimizedBlob.type }),
+                            headers: new Headers({ 'Content-Type': 'image/webp' }),
                         }));
                     } catch (e) {
                         console.warn('Snapbolt Cache Write Error:', e);
@@ -176,7 +198,7 @@ export const useImageOptimizer = (
             mounted = false;
             if (currentUrl) URL.revokeObjectURL(currentUrl);
         };
-    }, [src, quality, format, crossOrigin, wasmUrl, width, height, cache]);
+    }, [src, quality, format, crossOrigin, width, height, cache]);
 
     return state;
 };
