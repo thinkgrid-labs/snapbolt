@@ -159,10 +159,11 @@ const s = {
 // ── Sample images (via picsum.photos — free, CORS-enabled) ────────────────────
 
 const SAMPLES = [
-  { label: 'Landscape', url: 'https://picsum.photos/seed/landscape/900/600' },
-  { label: 'Portrait',  url: 'https://picsum.photos/seed/portrait/600/900'  },
-  { label: 'City',      url: 'https://picsum.photos/seed/city/900/600'      },
-  { label: 'Nature',    url: 'https://picsum.photos/seed/nature/900/600'    },
+  { label: 'Landscape', url: 'https://picsum.photos/seed/landscape/1920/1280' },
+  { label: 'Portrait',  url: 'https://picsum.photos/seed/portrait/1080/1620'  },
+  { label: 'City',      url: 'https://picsum.photos/seed/city/1920/1280'      },
+  { label: 'Nature',    url: 'https://picsum.photos/seed/nature/1920/1280'    },
+  { label: 'Abstract',  url: 'https://picsum.photos/seed/abstract/1920/1280'  },
 ];
 
 // ── URL demo section ──────────────────────────────────────────────────────────
@@ -218,7 +219,8 @@ function UrlDemo() {
     <div style={s.section}>
       <div style={s.sectionTitle}>URL optimization (WASM mode)</div>
       <div style={s.sectionDesc}>
-        Images are fetched, compressed to WebP in a background Web Worker, and displayed — no server involved.
+        High-res images (1920×1280) are fetched, compressed to WebP in a background Web Worker, and displayed — no server involved.
+        Best savings on large, uncompressed source images. For already-optimised thumbnails WebP sometimes loses — the fallback serves the original.
       </div>
 
       <div style={s.sampleRow}>

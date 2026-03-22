@@ -72,8 +72,11 @@ pub fn optimize_buffer(
             }
             #[cfg(not(feature = "native"))]
             {
+                use image::codecs::webp::WebPEncoder;
                 let mut out = Cursor::new(Vec::new());
-                img.write_to(&mut out, image::ImageFormat::WebP)
+                let quality = options.quality.clamp(1.0, 100.0);
+                let encoder = WebPEncoder::new_lossy(&mut out, quality);
+                img.write_with_encoder(encoder)
                     .map_err(|e| OptimizerError::EncodeError(e.to_string()))?;
                 Ok((out.into_inner(), "image/webp"))
             }
