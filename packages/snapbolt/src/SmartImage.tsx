@@ -202,7 +202,7 @@ function SmartImageServer({
         link.setAttribute('imagesizes', sizesAttr);
         link.setAttribute('fetchpriority', 'high');
         document.head.appendChild(link);
-        return () => { document.head.removeChild(link); };
+        return () => { link.remove(); };
     }, [priority, primarySrc, srcSet, sizesAttr]);
 
     const imgStyle: CSSProperties = fill
