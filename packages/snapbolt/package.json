@@ -1,6 +1,6 @@
 {
   "name": "@thinkgrid/snapbolt",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Unified image optimization toolkit for the browser and React",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

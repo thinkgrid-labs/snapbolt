@@ -69,16 +69,24 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact: snapbolt-cli-linux-x64
+            target: x86_64-unknown-linux-gnu
           - os: macos-latest
-            artifact: snapbolt-cli-darwin-universal
+            artifact: snapbolt-cli-darwin-arm64
+            target: aarch64-apple-darwin
+          - os: macos-13
+            artifact: snapbolt-cli-darwin-x64
+            target: x86_64-apple-darwin
           - os: windows-latest
             artifact: snapbolt-cli-win32-x64
+            target: x86_64-pc-windows-msvc
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
