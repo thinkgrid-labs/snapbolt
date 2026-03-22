@@ -158,12 +158,14 @@ const s = {
 
 // ── Sample images (via picsum.photos — free, CORS-enabled) ────────────────────
 
+// High-quality, unoptimized JPEGs from Wikimedia Commons (CORS: Access-Control-Allow-Origin: *).
+// These are 2–4 MB originals so WebP compression shows real, meaningful savings.
 const SAMPLES = [
-  { label: 'Landscape', url: 'https://picsum.photos/seed/landscape/1920/1280' },
-  { label: 'Portrait',  url: 'https://picsum.photos/seed/portrait/1080/1620'  },
-  { label: 'City',      url: 'https://picsum.photos/seed/city/1920/1280'      },
-  { label: 'Nature',    url: 'https://picsum.photos/seed/nature/1920/1280'    },
-  { label: 'Abstract',  url: 'https://picsum.photos/seed/abstract/1920/1280'  },
+  { label: 'Waterfall', url: 'https://upload.wikimedia.org/wikipedia/commons/3/36/Hopetoun_falls.jpg'            },
+  { label: 'Bridge',    url: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg'      },
+  { label: 'Flowers',   url: 'https://upload.wikimedia.org/wikipedia/commons/4/41/Sunflower_from_Silesia2.jpg'   },
+  { label: 'Fruits',    url: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Culinary_fruits_front_view.jpg' },
+  { label: 'Cat',       url: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg'         },
 ];
 
 // ── URL demo section ──────────────────────────────────────────────────────────
@@ -203,8 +205,8 @@ function UrlDemo() {
       <div style={s.sectionTitle}>URL optimization (WASM mode)</div>
       <div style={s.sectionDesc}>
         Images are encoded entirely in your browser via the Canvas API — no server, no uploads.
-        Snapbolt fetches the source image, draws it to a canvas, and exports WebP at the chosen
-        quality. Typically 30–60% smaller than the original JPEG.
+        Source images are high-quality unoptimized JPEGs (2–4 MB each) from Wikimedia Commons,
+        so you can see real compression savings. At quality 80, expect 60–85% smaller output.
       </div>
 
       <div style={s.sampleRow}>
@@ -237,7 +239,7 @@ function UrlDemo() {
             {origSize && <span style={{ color: '#aaa', fontSize: 12 }}>{fmtBytes(origSize)}</span>}
           </div>
           <img src={selected.url} alt="Original" style={s.img} crossOrigin="anonymous" />
-          <div style={s.meta}>Source from picsum.photos · 1920×1280</div>
+          <div style={s.meta}>Source: Wikimedia Commons · high-quality unoptimized JPEG</div>
         </div>
 
         <div style={s.card}>
