@@ -160,12 +160,13 @@ const s = {
 
 // High-quality, unoptimized JPEGs from Wikimedia Commons (CORS: Access-Control-Allow-Origin: *).
 // These are 2–4 MB originals so WebP compression shows real, meaningful savings.
+// Chosen for smooth/simple areas (sky, solid backgrounds) that compress best with WebP.
 const SAMPLES = [
-  { label: 'Waterfall', url: 'https://upload.wikimedia.org/wikipedia/commons/3/36/Hopetoun_falls.jpg'            },
-  { label: 'Bridge',    url: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg'      },
-  { label: 'Flowers',   url: 'https://upload.wikimedia.org/wikipedia/commons/4/41/Sunflower_from_Silesia2.jpg'   },
-  { label: 'Fruits',    url: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Culinary_fruits_front_view.jpg' },
-  { label: 'Cat',       url: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg'         },
+  { label: 'Food',    url: 'https://upload.wikimedia.org/wikipedia/commons/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg' },
+  { label: 'Bridge',  url: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/GoldenGateBridge-001.jpg'                   },
+  { label: 'Flowers', url: 'https://upload.wikimedia.org/wikipedia/commons/4/41/Sunflower_from_Silesia2.jpg'                },
+  { label: 'Fruits',  url: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Culinary_fruits_front_view.jpg'             },
+  { label: 'Cat',     url: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg'                      },
 ];
 
 // ── URL demo section ──────────────────────────────────────────────────────────
