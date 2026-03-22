@@ -78,8 +78,8 @@ const toWebP = (blob: Blob, quality: number): Promise<Blob> =>
         img.onload = () => {
             URL.revokeObjectURL(blobUrl);
             const canvas = document.createElement('canvas');
-            canvas.width = img.width || 1;
-            canvas.height = img.height || 1;
+            canvas.width = img.naturalWidth || img.width || 1;
+            canvas.height = img.naturalHeight || img.height || 1;
             const ctx = canvas.getContext('2d');
             if (!ctx) { reject(new Error('Canvas not supported')); return; }
             ctx.drawImage(img, 0, 0);
