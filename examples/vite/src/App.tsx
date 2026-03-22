@@ -154,6 +154,20 @@ const s = {
     cursor: 'pointer',
     transition: 'all 0.15s',
   }) as React.CSSProperties,
+  formatSelect: {
+    background: '#1e1e1e',
+    border: '1px solid #333',
+    borderRadius: 6,
+    padding: '5px 10px',
+    fontSize: 13,
+    color: '#ccc',
+    cursor: 'pointer',
+  } as React.CSSProperties,
+  formatHint: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic' as const,
+  } as React.CSSProperties,
 };
 
 // ── Sample images (via picsum.photos — free, CORS-enabled) ────────────────────
@@ -168,14 +182,27 @@ const SAMPLES = [
 
 // ── URL demo section ──────────────────────────────────────────────────────────
 
+type OutputFormat = 'avif' | 'webp' | 'jpeg' | 'png';
+
+// In WASM mode, lossy WebP (libwebp C FFI) is unavailable — requests for 'webp'
+// transparently route to AVIF (pure Rust rav1e). The returned mime is 'image/avif'.
+const FORMAT_LABELS: Record<OutputFormat, string> = {
+  avif: 'AVIF',
+  webp: 'WebP → AVIF *',
+  jpeg: 'JPEG',
+  png:  'PNG (lossless)',
+};
+
 function UrlDemo() {
   const [selected, setSelected] = useState(SAMPLES[0]);
-  const [quality, setQuality] = useState(80);
+  const [quality, setQuality] = useState(60);
+  const [format, setFormat] = useState<OutputFormat>('avif');
   const [origSize, setOrigSize] = useState<number | null>(null);
   const [optSize, setOptSize] = useState<number | null>(null);
 
   const { optimizedUrl, loading, error } = useImageOptimizer(selected.url, {
     quality,
+    format,
     crossOrigin: 'anonymous',
   });
 
@@ -197,14 +224,16 @@ function UrlDemo() {
   }, [optimizedUrl, loading]);
 
   const handleQuality = (q: number) => { setQuality(q); setOptSize(null); };
+  const handleFormat  = (f: OutputFormat) => { setFormat(f); setOptSize(null); };
   const handleSample  = (s: typeof SAMPLES[0]) => { setSelected(s); setOptSize(null); setOrigSize(null); };
 
   return (
     <div style={s.section}>
       <div style={s.sectionTitle}>URL optimization (WASM mode)</div>
       <div style={s.sectionDesc}>
-        Images are decoded by Rust WASM in a background Worker, then re-encoded to lossy WebP via
-        the browser's Canvas encoder — no server, no uploads.
+        Images are encoded to lossy AVIF entirely in Rust WASM inside a background Worker —
+        no server, no uploads, no Canvas. AVIF typically achieves 40–60% smaller files than
+        JPEG at equivalent visual quality.
       </div>
 
       <div style={s.sampleRow}>
@@ -220,6 +249,16 @@ function UrlDemo() {
       </div>
 
       <div style={s.qualityRow}>
+        <span style={{ color: '#888' }}>Format</span>
+        <select
+          style={s.formatSelect}
+          value={format}
+          onChange={e => handleFormat(e.target.value as OutputFormat)}
+        >
+          {(Object.keys(FORMAT_LABELS) as OutputFormat[]).map(f => (
+            <option key={f} value={f}>{FORMAT_LABELS[f]}</option>
+          ))}
+        </select>
         <span style={{ color: '#888' }}>Quality</span>
         <input
           type="range" min={10} max={100} step={5}
@@ -229,6 +268,12 @@ function UrlDemo() {
         />
         <span style={s.pill}>{quality}</span>
       </div>
+      {format === 'webp' && (
+        <div style={{ ...s.sectionDesc, marginBottom: 12 }}>
+          * WebP lossy encoding requires C FFI (libwebp) — unavailable in WASM. Snapbolt
+          transparently routes to AVIF (pure Rust rav1e), which is smaller and higher quality.
+        </div>
+      )}
 
       <div style={s.grid}>
         <div style={s.card}>
@@ -242,7 +287,7 @@ function UrlDemo() {
 
         <div style={s.card}>
           <div style={s.cardLabel}>
-            <span>Optimized (WebP)</span>
+            <span>Optimized ({FORMAT_LABELS[format]})</span>
             {optSize && <span style={s.badge('#4ade80')}>{fmtBytes(optSize)}</span>}
           </div>
           {loading && <div style={s.shimmer} />}
@@ -258,7 +303,7 @@ function UrlDemo() {
               <span style={optSize < origSize ? s.savings : { color: '#f87171' }}>
                 {optSize < origSize
                   ? `↓ ${savings(origSize, optSize)} · quality=${quality}`
-                  : `↑ ${savings(optSize, origSize)} larger — lower quality to win`}
+                  : `↑ ${savings(optSize, origSize)} larger — try lower quality or AVIF`}
               </span>
             )}
           </div>
@@ -273,9 +318,10 @@ function UrlDemo() {
 function UploadDemo() {
   const [file, setFile] = useState<File | null>(null);
   const [quality, setQuality] = useState(80);
+  const [format, setFormat] = useState<OutputFormat>('avif');
   const [origPreview, setOrigPreview] = useState<string | null>(null);
 
-  const { optimizedUrl, loading, error } = useImageOptimizer(file ?? '', { quality });
+  const { optimizedUrl, loading, error } = useImageOptimizer(file ?? '', { quality, format });
 
   const handleFile = (f: File) => {
     setFile(f);
@@ -316,6 +362,16 @@ function UploadDemo() {
       ) : (
         <>
           <div style={s.qualityRow}>
+            <span style={{ color: '#888' }}>Format</span>
+            <select
+              style={s.formatSelect}
+              value={format}
+              onChange={e => setFormat(e.target.value as OutputFormat)}
+            >
+              {(Object.keys(FORMAT_LABELS) as OutputFormat[]).map(f => (
+                <option key={f} value={f}>{FORMAT_LABELS[f]}</option>
+              ))}
+            </select>
             <span style={{ color: '#888' }}>Quality</span>
             <input
               type="range" min={10} max={100} step={5}
@@ -344,11 +400,11 @@ function UploadDemo() {
 
             <div style={s.card}>
               <div style={s.cardLabel}>
-                <span>Optimized (WebP)</span>
+                <span>Optimized ({FORMAT_LABELS[format]})</span>
                 {optimizedUrl && !loading && (
                   <a
                     href={optimizedUrl}
-                    download="optimized.webp"
+                    download={`optimized.${format === 'webp' ? 'avif' : format}`}
                     style={{ ...s.badge('#3b82f6'), textDecoration: 'none' }}
                   >
                     ↓ Download
@@ -388,8 +444,8 @@ export default function App() {
         <div style={s.header}>
           <div style={s.title}>⚡ Snapbolt — WASM Demo</div>
           <div style={s.subtitle}>
-            Image optimization running entirely in your browser via Rust + WebAssembly.<br />
-            No server. No uploads. SIMD-accelerated on modern browsers.
+            AVIF encoding running entirely in your browser via Rust + WebAssembly.<br />
+            No server. No uploads. Pure Rust — no Canvas, no C FFI.
           </div>
         </div>
 

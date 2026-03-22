@@ -2,8 +2,9 @@
 // Automatically falls back to main-thread WASM when Workers are unavailable
 // (SSR, Node.js, or bundlers that don't support new URL(..., import.meta.url)).
 
-type Resolve = (v: Uint8Array) => void;
-type Reject  = (e: Error)      => void;
+type WorkerResult = { data: Uint8Array<ArrayBuffer>; mime: string };
+type Resolve = (v: WorkerResult) => void;
+type Reject  = (e: Error)        => void;
 
 let worker: Worker | null = null;
 let counter = 0;
@@ -19,15 +20,15 @@ function getWorker(): Worker | null {
             { type: 'module' },
         );
 
-        worker.onmessage = (e: MessageEvent<{ id: number; result?: Uint8Array; error?: string }>) => {
-            const { id, result, error } = e.data;
+        worker.onmessage = (e: MessageEvent<{ id: number; data?: Uint8Array; mime?: string; error?: string }>) => {
+            const { id, data, mime, error } = e.data;
             const p = pending.get(id);
             if (!p) return;
             pending.delete(id);
-            if (error || !result) {
+            if (error || !data || !mime) {
                 p.reject(new Error(error ?? 'Worker returned no result'));
             } else {
-                p.resolve(result);
+                p.resolve({ data: new Uint8Array(data.buffer as ArrayBuffer, data.byteOffset, data.byteLength), mime });
             }
         };
 
@@ -44,15 +45,16 @@ function getWorker(): Worker | null {
 }
 
 /**
- * Encode `bytes` to WebP via a background Web Worker.
+ * Encode `bytes` via a background Web Worker.
  * Returns `null` if Workers are unavailable — caller must fall back to main-thread WASM.
  * The input buffer is copied so the caller's `bytes` remain valid after the call.
  */
 export async function optimizeViaWorker(
     bytes: Uint8Array,
     quality: number,
+    format?: string,
     wasmUrl?: string,
-): Promise<Uint8Array | null> {
+): Promise<WorkerResult | null> {
     const w = getWorker();
     if (!w) return null;
 
@@ -62,8 +64,8 @@ export async function optimizeViaWorker(
     const transferable = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
     const view = new Uint8Array(transferable);
 
-    return new Promise<Uint8Array>((resolve, reject) => {
+    return new Promise<WorkerResult>((resolve, reject) => {
         pending.set(id, { resolve, reject });
-        w.postMessage({ id, bytes: view, quality, wasmUrl }, [transferable]);
+        w.postMessage({ id, bytes: view, quality, format, wasmUrl }, [transferable]);
     });
 }

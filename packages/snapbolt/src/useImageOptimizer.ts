@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import init, { optimize_image_sync } from '../pkg/snapbolt';
+import init, { optimize_image } from '../pkg/snapbolt';
 import { optimizeViaWorker } from './workerBridge';
 
 export interface ImageOptimizerOptions {
     quality?: number;
+    format?: 'webp' | 'avif' | 'jpeg' | 'png';
     crossOrigin?: 'anonymous' | 'use-credentials';
     wasmUrl?: string;
     width?: number;
@@ -16,38 +17,6 @@ export interface UseImageOptimizerResult {
     loading: boolean;
     error: string | null;
 }
-
-// Convert any image bytes to lossy WebP using the browser's native Canvas encoder.
-// This is the final step in WASM mode — the Rust layer does quality-controlled JPEG
-// encoding (pure Rust, no C FFI), then Canvas re-encodes to WebP using the browser's
-// built-in libwebp. Returns the original blob if the browser doesn't support WebP output.
-const toWebP = async (bytes: Uint8Array, quality: number): Promise<Blob> => {
-    const srcBlob = new Blob([bytes.slice().buffer], { type: 'image/jpeg' });
-    if (typeof document === 'undefined') return srcBlob;
-    // Check canvas 2d support before entering the async image-load path.
-    // jsdom and non-canvas environments return null here, so we fall back
-    // immediately instead of creating a promise that never resolves.
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return srcBlob;
-    return new Promise<Blob>((resolve) => {
-        const img = new Image();
-        const url = URL.createObjectURL(srcBlob);
-        img.onload = () => {
-            URL.revokeObjectURL(url);
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            ctx.drawImage(img, 0, 0);
-            canvas.toBlob(
-                (b) => resolve(b ?? srcBlob),
-                'image/webp',
-                quality / 100,
-            );
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); resolve(srcBlob); };
-        img.src = url;
-    });
-};
 
 const resizeImage = async (blob: Blob, maxWidth?: number, maxHeight?: number): Promise<Blob> => {
     if (!maxWidth && !maxHeight) return blob;
@@ -92,7 +61,7 @@ export const useImageOptimizer = (
     const options: ImageOptimizerOptions =
         typeof optionsOrQuality === 'number' ? { quality: optionsOrQuality } : optionsOrQuality;
 
-    const { quality = 80, crossOrigin, wasmUrl, width, height, cache = true } = options;
+    const { quality = 80, format = 'avif', crossOrigin, wasmUrl, width, height, cache = true } = options;
 
     const [state, setState] = useState<UseImageOptimizerResult>({
         optimizedUrl: null,
@@ -111,7 +80,7 @@ export const useImageOptimizer = (
 
             try {
                 const cacheKey = typeof src === 'string'
-                    ? `snapbolt:${src}:${quality}:${width || ''}:${height || ''}`
+                    ? `snapbolt:${src}:${quality}:${format}:${width || ''}:${height || ''}`
                     : null;
 
                 if (cache && cacheKey && 'caches' in window) {
@@ -157,13 +126,22 @@ export const useImageOptimizer = (
                 const bytes = new Uint8Array(buffer);
 
                 // Try worker first (off main thread); fall back to main-thread WASM.
-                let optimizedBytes = await optimizeViaWorker(bytes, quality, wasmUrl);
-                if (!optimizedBytes) {
+                let workerResult = await optimizeViaWorker(bytes, quality, format, wasmUrl);
+                let optimizedBytes: Uint8Array<ArrayBuffer>;
+                let optimizedMime: string;
+                if (workerResult) {
+                    optimizedBytes = new Uint8Array(workerResult.data);
+                    optimizedMime = workerResult.mime;
+                } else {
                     await init(wasmUrl);
-                    optimizedBytes = optimize_image_sync(bytes, quality);
+                    const result = optimize_image(bytes, quality, format);
+                    // Copy into a plain Uint8Array<ArrayBuffer> so Blob constructor is happy.
+                    optimizedBytes = new Uint8Array(result.data);
+                    optimizedMime = result.mime;
+                    result.free();
                 }
 
-                const optimizedBlob = await toWebP(optimizedBytes, quality);
+                const optimizedBlob = new Blob([optimizedBytes], { type: optimizedMime });
 
                 if (cache && cacheKey && 'caches' in window) {
                     try {
@@ -197,7 +175,7 @@ export const useImageOptimizer = (
             mounted = false;
             if (currentUrl) URL.revokeObjectURL(currentUrl);
         };
-    }, [src, quality, crossOrigin, wasmUrl, width, height, cache]);
+    }, [src, quality, format, crossOrigin, wasmUrl, width, height, cache]);
 
     return state;
 };

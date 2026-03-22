@@ -15,6 +15,11 @@ vi.stubGlobal('URL', {
 vi.mock('../pkg/snapbolt', () => ({
     default: vi.fn().mockResolvedValue({}),
     optimize_image_sync: vi.fn(() => new Uint8Array([1, 2, 3])),
+    optimize_image: vi.fn(() => ({
+        data: new Uint8Array([1, 2, 3]),
+        mime: 'image/avif',
+        free: vi.fn(),
+    })),
 }));
 
 // Worker bridge — default: worker unavailable → falls back to main-thread WASM
@@ -49,6 +54,11 @@ describe('useImageOptimizer', () => {
         const wasm = await import('../pkg/snapbolt');
         vi.mocked(wasm.default).mockResolvedValue({} as never);
         vi.mocked(wasm.optimize_image_sync).mockImplementation(() => new Uint8Array([1, 2, 3]));
+        vi.mocked(wasm.optimize_image).mockImplementation(() => ({
+            data: new Uint8Array([1, 2, 3]),
+            mime: 'image/avif',
+            free: vi.fn(),
+        }));
     });
 
     afterEach(() => {
@@ -66,10 +76,10 @@ describe('useImageOptimizer', () => {
         expect(result.current.error).toBeNull();
     });
 
-    it('accepts options as an object (quality only — avoids canvas resize in jsdom)', async () => {
+    it('accepts options as an object (quality + format)', async () => {
         mockFetchOk(makePngBlob());
         const { result } = renderHook(() =>
-            useImageOptimizer('photo.png', { quality: 60 })
+            useImageOptimizer('photo.png', { quality: 60, format: 'avif' })
         );
 
         await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
@@ -89,7 +99,10 @@ describe('useImageOptimizer', () => {
 
     it('uses the worker result when optimizeViaWorker resolves', async () => {
         const { optimizeViaWorker } = await import('./workerBridge');
-        vi.mocked(optimizeViaWorker).mockResolvedValueOnce(new Uint8Array([0x52, 0x49, 0x46, 0x46]));
+        vi.mocked(optimizeViaWorker).mockResolvedValueOnce({
+            data: new Uint8Array([0x52, 0x49, 0x46, 0x46]),
+            mime: 'image/avif',
+        });
         mockFetchOk(makePngBlob());
 
         const { result } = renderHook(() => useImageOptimizer('photo.png', 80));
@@ -102,14 +115,14 @@ describe('useImageOptimizer', () => {
     it('falls back to main-thread WASM when worker returns null', async () => {
         const { optimizeViaWorker } = await import('./workerBridge');
         vi.mocked(optimizeViaWorker).mockResolvedValueOnce(null);
-        const { optimize_image_sync } = await import('../pkg/snapbolt');
+        const { optimize_image } = await import('../pkg/snapbolt');
         mockFetchOk(makePngBlob());
 
         const { result } = renderHook(() => useImageOptimizer('photo.png', 80));
 
         await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
         expect(result.current.optimizedUrl).toBe('blob:mock-url');
-        expect(vi.mocked(optimize_image_sync)).toHaveBeenCalled();
+        expect(vi.mocked(optimize_image)).toHaveBeenCalled();
     });
 
     // ── Unsupported content types ──────────────────────────────────────────────

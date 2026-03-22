@@ -68,10 +68,11 @@ describe('optimizeViaWorker — Worker available', () => {
         expect(transferList).toBeDefined();
 
         const resultBytes = new Uint8Array([0xFF, 0xD8]);
-        mockWorker.onmessage!({ data: { id: 0, result: resultBytes } } as MessageEvent);
+        mockWorker.onmessage!({ data: { id: 0, data: resultBytes, mime: 'image/avif' } } as MessageEvent);
 
         const result = await promise;
-        expect(result).toEqual(resultBytes);
+        expect(result).not.toBeNull();
+        expect(result!.mime).toBe('image/avif');
         expect(WorkerCtor).toHaveBeenCalledWith(
             expect.any(URL),
             { type: 'module' }
@@ -88,22 +89,22 @@ describe('optimizeViaWorker — Worker available', () => {
         const r0 = new Uint8Array([30, 40]);
 
         // Resolve in reverse order
-        mockWorker.onmessage!({ data: { id: 1, result: r1 } } as MessageEvent);
-        mockWorker.onmessage!({ data: { id: 0, result: r0 } } as MessageEvent);
+        mockWorker.onmessage!({ data: { id: 1, data: r1, mime: 'image/avif' } } as MessageEvent);
+        mockWorker.onmessage!({ data: { id: 0, data: r0, mime: 'image/avif' } } as MessageEvent);
 
-        expect(await p0).toEqual(r0);
-        expect(await p1).toEqual(r1);
+        expect((await p0)!.data).toEqual(r0);
+        expect((await p1)!.data).toEqual(r1);
     });
 
     it('reuses the same Worker across calls (singleton)', async () => {
         const { optimizeViaWorker } = await import('./workerBridge');
 
         const p0 = optimizeViaWorker(BYTES, 80);
-        mockWorker.onmessage!({ data: { id: 0, result: new Uint8Array([1]) } } as MessageEvent);
+        mockWorker.onmessage!({ data: { id: 0, data: new Uint8Array([1]), mime: 'image/avif' } } as MessageEvent);
         await p0;
 
         const p1 = optimizeViaWorker(BYTES, 80);
-        mockWorker.onmessage!({ data: { id: 1, result: new Uint8Array([2]) } } as MessageEvent);
+        mockWorker.onmessage!({ data: { id: 1, data: new Uint8Array([2]), mime: 'image/avif' } } as MessageEvent);
         await p1;
 
         expect(WorkerCtor).toHaveBeenCalledTimes(1);
@@ -140,7 +141,7 @@ describe('optimizeViaWorker — Worker available', () => {
 
         // Worker singleton should be reset — next call creates a new Worker
         const p2 = optimizeViaWorker(BYTES, 80);
-        mockWorker.onmessage!({ data: { id: 2, result: new Uint8Array([1]) } } as MessageEvent);
+        mockWorker.onmessage!({ data: { id: 2, data: new Uint8Array([1]), mime: 'image/avif' } } as MessageEvent);
         await p2;
 
         expect(WorkerCtor).toHaveBeenCalledTimes(2);
@@ -155,7 +156,7 @@ describe('optimizeViaWorker — Worker available', () => {
         expect(Array.isArray(transferList)).toBe(true);
         expect(transferList[0]).toBeInstanceOf(ArrayBuffer);
 
-        mockWorker.onmessage!({ data: { id: 0, result: new Uint8Array([1]) } } as MessageEvent);
+        mockWorker.onmessage!({ data: { id: 0, data: new Uint8Array([1]), mime: 'image/avif' } } as MessageEvent);
         await promise;
     });
 
@@ -168,5 +169,16 @@ describe('optimizeViaWorker — Worker available', () => {
         const { optimizeViaWorker } = await import('./workerBridge');
         const result = await optimizeViaWorker(BYTES, 80);
         expect(result).toBeNull();
+    });
+
+    it('forwards format to the worker postMessage', async () => {
+        const { optimizeViaWorker } = await import('./workerBridge');
+
+        const promise = optimizeViaWorker(BYTES, 80, 'avif');
+        const [payload] = mockWorker.postMessage.mock.calls[0];
+        expect(payload.format).toBe('avif');
+
+        mockWorker.onmessage!({ data: { id: 0, data: new Uint8Array([1]), mime: 'image/avif' } } as MessageEvent);
+        await promise;
     });
 });
