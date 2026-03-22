@@ -73,11 +73,11 @@ pub fn optimize_buffer(
             #[cfg(not(feature = "native"))]
             {
                 // WASM: the image crate's WebP encoder is lossless-only (no C FFI in wasm32).
-                // Encode as quality-controlled JPEG instead; the JS layer converts to WebP
-                // via the browser's native Canvas API (canvas.toBlob 'image/webp').
+                // Encode as near-lossless JPEG (q95) so the JS layer receives clean pixels.
+                // The actual lossy compression is applied once by canvas.toBlob('image/webp')
+                // at the user's chosen quality — avoiding double lossy encoding.
                 let mut out = Cursor::new(Vec::new());
-                let quality = options.quality.clamp(1.0, 100.0) as u8;
-                let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, quality);
+                let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, 95);
                 encoder
                     .encode_image(&img)
                     .map_err(|e| OptimizerError::EncodeError(e.to_string()))?;
