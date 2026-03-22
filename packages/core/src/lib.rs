@@ -148,11 +148,16 @@ mod tests {
         assert!(result.is_ok());
         let (data, mime) = result.unwrap();
 
-        // Default format is WebP. With the `avif` feature it routes to AVIF (pure Rust);
-        // without it, falls back to JPEG passthrough.
-        #[cfg(feature = "avif")]
+        // Default format is WebP. The actual output depends on which features are active
+        // via Cargo feature unification across the workspace:
+        //   native  → lossy WebP via libwebp-sys
+        //   avif    → AVIF via ravif (pure Rust WASM path)
+        //   neither → JPEG passthrough
+        #[cfg(feature = "native")]
+        assert_eq!(mime, "image/webp");
+        #[cfg(all(not(feature = "native"), feature = "avif"))]
         assert_eq!(mime, "image/avif");
-        #[cfg(not(feature = "avif"))]
+        #[cfg(all(not(feature = "native"), not(feature = "avif")))]
         assert_eq!(mime, "image/jpeg");
 
         assert!(!data.is_empty());
