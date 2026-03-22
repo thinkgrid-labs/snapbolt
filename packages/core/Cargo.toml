@@ -12,12 +12,15 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 # webp crate uses libwebp-sys (C FFI) — only for native targets, not wasm32
 webp = { version = "0.3", optional = true }
+# ravif: pure-Rust AVIF encoder via AV1 (rav1e). default-features = false disables rayon
+# (parallel encoding), which is required for wasm32-unknown-unknown.
+ravif = { version = "0.11", optional = true, default-features = false }
+rgb = { version = "0.8", optional = true }
 
 [features]
 default = []
-# Enable lossy WebP encoding via libwebp-sys (native targets only: CLI, server).
-# Do NOT enable for the snapbolt WASM crate — libwebp-sys cannot compile to wasm32.
-# Without this feature, WebP output falls back to the image crate's pure-Rust encoder.
-native = ["webp"]
-# AVIF support requires nasm: brew install nasm (then add ravif + rgb deps)
+# Pure-Rust AVIF encoding via ravif + rav1e. Works on both native and wasm32.
+avif = ["ravif", "rgb"]
+# Native-only: lossy WebP via libwebp-sys (C FFI) + AVIF. Do NOT enable for WASM builds.
+native = ["webp", "avif"]
 

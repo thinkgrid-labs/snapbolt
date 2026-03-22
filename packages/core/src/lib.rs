@@ -41,6 +41,21 @@ impl Default for OptimizeOptions {
     }
 }
 
+/// Pure-Rust AVIF encoder via ravif + rav1e. Works on wasm32-unknown-unknown.
+#[cfg(feature = "avif")]
+fn encode_avif(img: &image::DynamicImage, quality: f32) -> Result<Vec<u8>, OptimizerError> {
+    use rgb::FromSlice;
+    let rgba = img.to_rgba8();
+    let (width, height) = (rgba.width() as usize, rgba.height() as usize);
+    let pixels: &[rgb::RGBA8] = rgba.as_raw().as_rgba();
+    let result = ravif::Encoder::new()
+        .with_quality(quality)
+        .with_speed(6)
+        .encode_rgba(ravif::Img::new(pixels, width, height))
+        .map_err(|e| OptimizerError::EncodeError(e.to_string()))?;
+    Ok(result.avif_file)
+}
+
 /// Optimizes an image buffer. Returns (encoded_bytes, mime_type).
 pub fn optimize_buffer(
     input: &[u8],
@@ -62,7 +77,6 @@ pub fn optimize_buffer(
     match options.format {
         OutputFormat::WebP => {
             // Native: lossy WebP via libwebp-sys (quality-controlled, smaller output).
-            // WASM: pure-Rust encoder from the image crate (no C FFI, wasm32-compatible).
             #[cfg(feature = "native")]
             {
                 let encoder = webp::Encoder::from_image(&img)
@@ -70,24 +84,29 @@ pub fn optimize_buffer(
                 let memory = encoder.encode(options.quality);
                 Ok((memory.to_vec(), "image/webp"))
             }
-            #[cfg(not(feature = "native"))]
+            // WASM: route to AVIF (pure Rust, no C FFI needed). Transparent to callers
+            // requesting WebP — AVIF is smaller and better quality at equivalent bitrates.
+            #[cfg(all(not(feature = "native"), feature = "avif"))]
             {
-                // WASM: the image crate's WebP encoder is lossless-only (no C FFI in wasm32).
-                // Encode as near-lossless JPEG (q95) so the JS layer receives clean pixels.
-                // The actual lossy compression is applied once by canvas.toBlob('image/webp')
-                // at the user's chosen quality — avoiding double lossy encoding.
-                let mut out = Cursor::new(Vec::new());
-                let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, 95);
-                encoder
-                    .encode_image(&img)
-                    .map_err(|e| OptimizerError::EncodeError(e.to_string()))?;
-                Ok((out.into_inner(), "image/jpeg"))
+                encode_avif(&img, options.quality).map(|data| (data, "image/avif"))
+            }
+            // Fallback when neither native nor avif features are enabled.
+            #[cfg(all(not(feature = "native"), not(feature = "avif")))]
+            {
+                Ok((input.to_vec(), "image/jpeg"))
             }
         }
 
-        // AVIF encoding requires nasm (brew install nasm) + ravif + rgb deps.
-        // Enable by adding ravif/rgb to Cargo.toml and restoring the encode arm.
-        OutputFormat::Avif => Err(OptimizerError::UnsupportedFormat),
+        OutputFormat::Avif => {
+            #[cfg(feature = "avif")]
+            {
+                encode_avif(&img, options.quality).map(|data| (data, "image/avif"))
+            }
+            #[cfg(not(feature = "avif"))]
+            {
+                Err(OptimizerError::UnsupportedFormat)
+            }
+        }
 
         OutputFormat::Jpeg => {
             let mut out = Cursor::new(Vec::new());
@@ -127,11 +146,10 @@ mod tests {
         let result = optimize_buffer(MINIMAL_PNG, &options);
 
         assert!(result.is_ok());
-        let (webp_data, mime) = result.unwrap();
+        let (avif_data, mime) = result.unwrap();
 
-        assert_eq!(mime, "image/webp");
-        assert_eq!(&webp_data[0..4], b"RIFF");
-        assert_eq!(&webp_data[8..12], b"WEBP");
+        assert_eq!(mime, "image/avif");
+        assert!(!avif_data.is_empty());
     }
 
     #[test]
@@ -189,7 +207,7 @@ mod tests {
     fn test_resize_with_width() {
         let options = OptimizeOptions {
             width: Some(1),
-            format: OutputFormat::WebP,
+            format: OutputFormat::Avif,
             ..OptimizeOptions::default()
         };
         let result = optimize_buffer(MINIMAL_PNG, &options);
@@ -221,13 +239,16 @@ mod tests {
     }
 
     #[test]
-    fn test_avif_returns_unsupported_format() {
+    fn test_avif_output() {
         let options = OptimizeOptions {
             format: OutputFormat::Avif,
             ..OptimizeOptions::default()
         };
         let result = optimize_buffer(MINIMAL_PNG, &options);
-        assert!(matches!(result, Err(OptimizerError::UnsupportedFormat)));
+        assert!(result.is_ok());
+        let (data, mime) = result.unwrap();
+        assert_eq!(mime, "image/avif");
+        assert!(!data.is_empty());
     }
 
     #[test]
