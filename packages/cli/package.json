@@ -1,6 +1,6 @@
 {
   "name": "@thinkgrid/snapbolt-cli",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -22,6 +22,26 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.16.0"
+  },
+  "optionalDependencies": {
+    "@thinkgrid/snapbolt-cli-darwin-x64": "0.2.1",
+    "@thinkgrid/snapbolt-cli-darwin-arm64": "0.2.1",
+    "@thinkgrid/snapbolt-cli-darwin-universal": "0.2.1",
+    "@thinkgrid/snapbolt-cli-win32-x64-msvc": "0.2.1",
+    "@thinkgrid/snapbolt-cli-win32-ia32-msvc": "0.2.1",
+    "@thinkgrid/snapbolt-cli-win32-arm64-msvc": "0.2.1",
+    "@thinkgrid/snapbolt-cli-linux-x64-gnu": "0.2.1",
+    "@thinkgrid/snapbolt-cli-linux-x64-musl": "0.2.1",
+    "@thinkgrid/snapbolt-cli-linux-arm64-gnu": "0.2.1",
+    "@thinkgrid/snapbolt-cli-linux-arm64-musl": "0.2.1",
+    "@thinkgrid/snapbolt-cli-linux-arm-gnueabihf": "0.2.1",
+    "@thinkgrid/snapbolt-cli-linux-arm-musleabihf": "0.2.1",
+    "@thinkgrid/snapbolt-cli-linux-riscv64-gnu": "0.2.1",
+    "@thinkgrid/snapbolt-cli-linux-riscv64-musl": "0.2.1",
+    "@thinkgrid/snapbolt-cli-linux-s390x-gnu": "0.2.1",
+    "@thinkgrid/snapbolt-cli-freebsd-x64": "0.2.1",
+    "@thinkgrid/snapbolt-cli-android-arm64": "0.2.1",
+    "@thinkgrid/snapbolt-cli-android-arm-eabi": "0.2.1"
   },
   "description": "CLI tool for @thinkgrid/snapbolt",
   "keywords": [

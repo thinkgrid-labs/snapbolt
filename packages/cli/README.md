@@ -1,24 +1,71 @@
 # @thinkgrid/snapbolt-cli
 
-Native CLI tool for high-speed local image processing and asset management.
+Native Node.js NAPI addon for high-speed image optimization — powers both the in-app Next.js handler and the CLI.
 
-## Installation
+> Full usage guide: **[USAGE.md](../../USAGE.md)**
+
+---
+
+## Platform support
+
+npm automatically downloads the right prebuilt binary for your platform via `optionalDependencies`. No Rust toolchain required.
+
+| Platform | Binary |
+|---|---|
+| macOS Apple Silicon (arm64) | `snapbolt-cli.darwin-arm64.node` |
+| macOS Intel (x64) | `snapbolt-cli.darwin-x64.node` |
+| Linux x64 glibc | `snapbolt-cli.linux-x64-gnu.node` |
+| Linux x64 musl (Alpine) | `snapbolt-cli.linux-x64-musl.node` |
+| Linux arm64 glibc | `snapbolt-cli.linux-arm64-gnu.node` |
+| Linux arm64 musl | `snapbolt-cli.linux-arm64-musl.node` |
+| Windows x64 | `snapbolt-cli.win32-x64-msvc.node` |
+
+---
+
+## Usage in Next.js
+
+See [packages/snapbolt](../snapbolt/README.md) for the full Next.js setup. In short:
+
+```bash
+npm install @thinkgrid/snapbolt @thinkgrid/snapbolt-cli
+```
+
+```ts
+// app/api/image/route.ts
+export { GET } from '@thinkgrid/snapbolt/handler';
+```
+
+The handler loads `@thinkgrid/snapbolt-cli` at runtime (not bundled) to process images.
+
+---
+
+## CLI commands
+
+### Global install
 
 ```bash
 npm install -g @thinkgrid/snapbolt-cli
 ```
 
-## Commands
+### Bulk optimize images
 
-### 1. Sync WASM Binary
+Recursively converts all JPEG/PNG in a directory to WebP:
 
-If you are using `@thinkgrid/snapbolt` in a web project, use this to copy the required WASM binary to your public folder:
+```bash
+snapbolt-cli scan ./public
+# or without global install:
+npx @thinkgrid/snapbolt-cli scan ./public
+```
+
+### Sync WASM binary
+
+Copies `snapbolt_bg.wasm` from `node_modules` to your public folder (needed for browser WASM mode):
 
 ```bash
 snapbolt-cli sync ./public
 ```
 
-**Pro Tip:** Add this to your `package.json` scripts to automate it for your team:
+**Automate with postinstall:**
 
 ```json
 "scripts": {
@@ -26,17 +73,10 @@ snapbolt-cli sync ./public
 }
 ```
 
-### 2. Bulk Optimize (Scan)
+---
 
-Recursively scan and shrink images (PNG/JPG) in your local folder:
+## Troubleshooting
 
-```bash
-snapbolt-cli scan ./public
-```
+**Binary not loading on macOS Intel** — Upgrade to `@thinkgrid/snapbolt-cli` ≥ 0.2.1 and run `npm install` again. Earlier versions were missing the `optionalDependencies` entry for `darwin-x64`.
 
-## Why use this?
-
-- **Native Performance**: Built with Rust for maximum speed.
-- **Developer Productivity**: Automates the complex setup of WASM binaries in Next.js/Vite projects.
-
-For full documentation, visit our [GitHub Repository](https://github.com/ThinkGrid-Labs/snapbolt).
+**`Failed to load native binding`** — Run `npm install` to trigger the optional dependency resolution for your platform.

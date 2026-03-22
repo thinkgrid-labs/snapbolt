@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import init, { optimize_image_sync } from '../pkg/snapbolt';
+import { optimizeViaWorker } from './workerBridge';
 
 export interface ImageOptimizerOptions {
     quality?: number;
@@ -123,8 +124,12 @@ export const useImageOptimizer = (
                 const buffer = await blob.arrayBuffer();
                 const bytes = new Uint8Array(buffer);
 
-                await init(wasmUrl);
-                const optimizedBytes = optimize_image_sync(bytes, quality);
+                // Try worker first (off main thread); fall back to main-thread WASM.
+                let optimizedBytes = await optimizeViaWorker(bytes, quality, wasmUrl);
+                if (!optimizedBytes) {
+                    await init(wasmUrl);
+                    optimizedBytes = optimize_image_sync(bytes, quality);
+                }
 
                 const optimizedBlob = new Blob([optimizedBytes as unknown as BlobPart], { type: 'image/webp' });
 

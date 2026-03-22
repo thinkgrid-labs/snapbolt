@@ -95,4 +95,62 @@ mod tests {
         // but the scanner should still count 1 file.
         assert_eq!(count, 1);
     }
+
+    #[test]
+    fn test_optimize_directory_skips_non_images() {
+        let dir = tempdir().unwrap();
+        fs::write(dir.path().join("notes.txt"), b"hello").unwrap();
+        fs::write(dir.path().join("data.json"), b"{}").unwrap();
+        fs::write(dir.path().join("style.css"), b"body{}").unwrap();
+
+        let count = optimize_directory(dir.path().to_str().unwrap().to_string());
+        assert_eq!(count, 0);
+    }
+
+    #[test]
+    fn test_optimize_directory_counts_jpg_and_jpeg() {
+        let dir = tempdir().unwrap();
+        fs::write(dir.path().join("a.jpg"), b"fake").unwrap();
+        fs::write(dir.path().join("b.jpeg"), b"fake").unwrap();
+        fs::write(dir.path().join("c.png"), b"fake").unwrap();
+
+        let count = optimize_directory(dir.path().to_str().unwrap().to_string());
+        assert_eq!(count, 3);
+    }
+
+    #[test]
+    fn test_optimize_directory_recurses_into_subdirectories() {
+        let dir = tempdir().unwrap();
+        let sub = dir.path().join("sub");
+        fs::create_dir(&sub).unwrap();
+        fs::write(sub.join("deep.png"), b"fake").unwrap();
+        fs::write(dir.path().join("top.png"), b"fake").unwrap();
+
+        let count = optimize_directory(dir.path().to_str().unwrap().to_string());
+        assert_eq!(count, 2);
+    }
+
+    #[test]
+    fn test_optimize_directory_valid_png_writes_webp_file() {
+        // Minimal 1×1 red-pixel PNG (same as core tests)
+        const MINIMAL_PNG: &[u8] = &[
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48,
+            0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x02, 0x00, 0x00,
+            0x00, 0x90, 0x77, 0x53, 0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, 0x54, 0x08,
+            0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00, 0x00, 0x03, 0x01, 0x01, 0x00, 0x18, 0xDD, 0x8D,
+            0xB0, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+        ];
+
+        let dir = tempdir().unwrap();
+        let src = dir.path().join("real.png");
+        fs::write(&src, MINIMAL_PNG).unwrap();
+
+        optimize_directory(dir.path().to_str().unwrap().to_string());
+
+        let webp_path = dir.path().join("real.webp");
+        assert!(webp_path.exists(), "expected .webp output file to be written");
+        let webp_data = fs::read(&webp_path).unwrap();
+        assert_eq!(&webp_data[0..4], b"RIFF");
+        assert_eq!(&webp_data[8..12], b"WEBP");
+    }
 }

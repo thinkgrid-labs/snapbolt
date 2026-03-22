@@ -1,0 +1,4 @@
+# Enable WASM SIMD128 — ~2× faster encoding on modern browsers and Node.js 18+.
+# Applied only to the wasm32 target so native (CLI) builds are unaffected.
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=+simd128"]

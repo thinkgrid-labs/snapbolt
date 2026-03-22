@@ -189,4 +189,83 @@ mod tests {
         let result = optimize_buffer(MINIMAL_PNG, &options);
         assert!(result.is_ok());
     }
+
+    #[test]
+    fn test_resize_with_height_only() {
+        let options = OptimizeOptions {
+            height: Some(1),
+            format: OutputFormat::Png,
+            ..OptimizeOptions::default()
+        };
+        let result = optimize_buffer(MINIMAL_PNG, &options);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_resize_with_both_dimensions() {
+        let options = OptimizeOptions {
+            width: Some(2),
+            height: Some(2),
+            format: OutputFormat::Jpeg,
+            ..OptimizeOptions::default()
+        };
+        let (data, mime) = optimize_buffer(MINIMAL_PNG, &options).unwrap();
+        assert_eq!(mime, "image/jpeg");
+        assert!(!data.is_empty());
+    }
+
+    #[test]
+    fn test_avif_returns_unsupported_format() {
+        let options = OptimizeOptions {
+            format: OutputFormat::Avif,
+            ..OptimizeOptions::default()
+        };
+        let result = optimize_buffer(MINIMAL_PNG, &options);
+        assert!(matches!(result, Err(OptimizerError::UnsupportedFormat)));
+    }
+
+    #[test]
+    fn test_jpeg_quality_boundary_high() {
+        let options = OptimizeOptions {
+            quality: 100.0,
+            format: OutputFormat::Jpeg,
+            ..OptimizeOptions::default()
+        };
+        let (data, mime) = optimize_buffer(MINIMAL_PNG, &options).unwrap();
+        assert_eq!(mime, "image/jpeg");
+        assert!(!data.is_empty());
+    }
+
+    #[test]
+    fn test_jpeg_quality_boundary_low() {
+        let options = OptimizeOptions {
+            quality: 1.0,
+            format: OutputFormat::Jpeg,
+            ..OptimizeOptions::default()
+        };
+        let (data, mime) = optimize_buffer(MINIMAL_PNG, &options).unwrap();
+        assert_eq!(mime, "image/jpeg");
+        assert!(!data.is_empty());
+    }
+
+    #[test]
+    fn test_empty_input_returns_decode_error() {
+        let options = OptimizeOptions::default();
+        let result = optimize_buffer(&[], &options);
+        assert!(matches!(result, Err(OptimizerError::DecodeError(_))));
+    }
+
+    #[test]
+    fn test_optimize_options_default_values() {
+        let opts = OptimizeOptions::default();
+        assert_eq!(opts.quality, 80.0);
+        assert_eq!(opts.width, None);
+        assert_eq!(opts.height, None);
+        assert_eq!(opts.format, OutputFormat::WebP);
+    }
+
+    #[test]
+    fn test_output_format_default_is_webp() {
+        assert_eq!(OutputFormat::default(), OutputFormat::WebP);
+    }
 }

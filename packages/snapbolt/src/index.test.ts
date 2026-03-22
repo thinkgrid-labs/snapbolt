@@ -1,77 +1,211 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useImageOptimizer } from './index';
 
-// Mock Fetch
-global.fetch = vi.fn();
+// ── Global mocks ──────────────────────────────────────────────────────────────
 
-// Mock URL.createObjectURL/revokeObjectURL
-if (typeof window !== 'undefined') {
-    window.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
-    window.URL.revokeObjectURL = vi.fn();
-}
+vi.stubGlobal('fetch', vi.fn());
+vi.stubGlobal('URL', {
+    createObjectURL: vi.fn(() => 'blob:mock-url'),
+    revokeObjectURL: vi.fn(),
+});
 
-// Mock the Wasm Module import.
-// `init` is the default export; `optimize_image_sync` is a named export.
+// WASM module — avoids compiling actual Rust in tests
 vi.mock('../pkg/snapbolt.js', () => ({
     default: vi.fn().mockResolvedValue({}),
     optimize_image_sync: vi.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
 }));
 
+// Worker bridge — default: worker unavailable → falls back to main-thread WASM
+vi.mock('./workerBridge', () => ({
+    optimizeViaWorker: vi.fn().mockResolvedValue(null),
+}));
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function makePngBlob(): Blob {
+    const blob = new Blob(['png-bytes'], { type: 'image/png' });
+    (blob as Blob & { arrayBuffer: ReturnType<typeof vi.fn> }).arrayBuffer =
+        vi.fn().mockResolvedValue(new ArrayBuffer(9));
+    return blob;
+}
+
+function mockFetchOk(blob: Blob, contentType = 'image/png') {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: true,
+        headers: new Headers({ 'Content-Type': contentType }),
+        blob: () => Promise.resolve(blob),
+    });
+}
+
+// ── Tests ──────────────────────────────────────────────────────────────────────
+
 describe('useImageOptimizer', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        (global.fetch as any).mockReset();
+        (fetch as ReturnType<typeof vi.fn>).mockReset();
     });
 
-    it('should optimize image smoothly', async () => {
-        const mockBlob = new Blob(['test'], { type: 'image/png' });
-        mockBlob.arrayBuffer = vi.fn().mockResolvedValue(new ArrayBuffer(4));
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
-        (global.fetch as any).mockResolvedValue({
-            ok: true,
-            headers: new Headers({ 'Content-Type': 'image/png' }),
-            blob: () => Promise.resolve(mockBlob),
-        });
+    // ── Happy path ─────────────────────────────────────────────────────────────
 
-        const { result } = renderHook(() => useImageOptimizer('test.png', 80));
+    it('optimizes a URL and returns a blob: URL', async () => {
+        mockFetchOk(makePngBlob());
+        const { result } = renderHook(() => useImageOptimizer('photo.png', 80));
 
         await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
         expect(result.current.optimizedUrl).toBe('blob:mock-url');
         expect(result.current.error).toBeNull();
     });
 
-    it('should handle fetch errors', async () => {
-        (global.fetch as any).mockResolvedValue({
+    it('accepts options as an object (quality only — avoids canvas resize in jsdom)', async () => {
+        mockFetchOk(makePngBlob());
+        const { result } = renderHook(() =>
+            useImageOptimizer('photo.png', { quality: 60 })
+        );
+
+        await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
+        expect(result.current.error).toBeNull();
+        expect(result.current.optimizedUrl).toBe('blob:mock-url');
+    });
+
+    it('accepts a Blob source directly (skips fetch)', async () => {
+        const blob = makePngBlob();
+        const { result } = renderHook(() => useImageOptimizer(blob, 80));
+
+        await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
+        expect(fetch).not.toHaveBeenCalled();
+        expect(result.current.optimizedUrl).toBe('blob:mock-url');
+        expect(result.current.error).toBeNull();
+    });
+
+    it('uses the worker result when optimizeViaWorker resolves', async () => {
+        const { optimizeViaWorker } = await import('./workerBridge');
+        vi.mocked(optimizeViaWorker).mockResolvedValueOnce(new Uint8Array([0x52, 0x49, 0x46, 0x46]));
+        mockFetchOk(makePngBlob());
+
+        const { result } = renderHook(() => useImageOptimizer('photo.png', 80));
+
+        await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
+        expect(result.current.optimizedUrl).toBe('blob:mock-url');
+        expect(vi.mocked(optimizeViaWorker)).toHaveBeenCalled();
+    });
+
+    it('falls back to main-thread WASM when worker returns null', async () => {
+        const { optimizeViaWorker } = await import('./workerBridge');
+        vi.mocked(optimizeViaWorker).mockResolvedValueOnce(null);
+        const { optimize_image_sync } = await import('../pkg/snapbolt.js');
+        mockFetchOk(makePngBlob());
+
+        const { result } = renderHook(() => useImageOptimizer('photo.png', 80));
+
+        await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
+        expect(result.current.optimizedUrl).toBe('blob:mock-url');
+        expect(vi.mocked(optimize_image_sync)).toHaveBeenCalled();
+    });
+
+    // ── Unsupported content types ──────────────────────────────────────────────
+
+    it('passes GIF through without optimization', async () => {
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+            ok: true,
+            headers: new Headers({ 'Content-Type': 'image/gif' }),
+            blob: vi.fn(),
+        });
+
+        const { result } = renderHook(() => useImageOptimizer('animation.gif', 80));
+
+        await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
+        expect(result.current.optimizedUrl).toBe('animation.gif');
+        expect(result.current.error).toBeNull();
+    });
+
+    it('passes SVG through without optimization', async () => {
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+            ok: true,
+            headers: new Headers({ 'Content-Type': 'image/svg+xml' }),
+            blob: vi.fn(),
+        });
+
+        const { result } = renderHook(() => useImageOptimizer('icon.svg', 80));
+
+        await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
+        expect(result.current.optimizedUrl).toBe('icon.svg');
+    });
+
+    // ── Error handling ─────────────────────────────────────────────────────────
+
+    it('handles fetch 404 gracefully — sets error + falls back to original src', async () => {
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
             ok: false,
             headers: new Headers(),
             statusText: 'Not Found',
         });
 
-        const { result } = renderHook(() => useImageOptimizer('invalid.png', 80));
+        const { result } = renderHook(() => useImageOptimizer('missing.png', 80));
 
         await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
         expect(result.current.error).toContain('Failed to fetch image');
-        // Hook falls back to the original src on error (graceful degradation)
-        expect(result.current.optimizedUrl).toBe('invalid.png');
+        expect(result.current.optimizedUrl).toBe('missing.png');
     });
 
-    it('should cleanup on unmount', async () => {
-        const mockBlob = new Blob(['test'], { type: 'image/png' });
-        mockBlob.arrayBuffer = vi.fn().mockResolvedValue(new ArrayBuffer(4));
+    it('returns null optimizedUrl when a Blob source fails', async () => {
+        const blob = new Blob(['corrupt'], { type: 'image/png' });
+        (blob as Blob & { arrayBuffer: ReturnType<typeof vi.fn> }).arrayBuffer =
+            vi.fn().mockRejectedValue(new Error('read error'));
 
-        (global.fetch as any).mockResolvedValue({
-            ok: true,
-            headers: new Headers({ 'Content-Type': 'image/png' }),
-            blob: () => Promise.resolve(mockBlob),
+        const { result } = renderHook(() => useImageOptimizer(blob, 80));
+
+        await waitFor(() => expect(result.current.loading).toBe(false), { timeout: 4000 });
+        expect(result.current.error).not.toBeNull();
+        expect(result.current.optimizedUrl).toBeNull();
+    });
+
+    // ── Re-render stability ────────────────────────────────────────────────────
+
+    it('does not refetch when src is unchanged across re-renders', async () => {
+        mockFetchOk(makePngBlob());
+
+        const { rerender } = renderHook(({ src }) => useImageOptimizer(src, 80), {
+            initialProps: { src: 'stable.png' },
         });
 
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1), { timeout: 4000 });
+        rerender({ src: 'stable.png' });
+        expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('refetches when src changes', async () => {
+        mockFetchOk(makePngBlob());
+
+        const { rerender } = renderHook(({ src }) => useImageOptimizer(src, 80), {
+            initialProps: { src: 'first.png' },
+        });
+
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1), { timeout: 4000 });
+
+        mockFetchOk(makePngBlob());
+        rerender({ src: 'second.png' });
+
+        await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2), { timeout: 4000 });
+    });
+
+    // ── Cleanup ────────────────────────────────────────────────────────────────
+
+    it('revokes the blob URL on unmount', async () => {
+        mockFetchOk(makePngBlob());
         const { unmount } = renderHook(() => useImageOptimizer('cleanup.png', 80));
 
-        await waitFor(() => expect(window.URL.createObjectURL).toHaveBeenCalled(), { timeout: 3000 });
+        await waitFor(
+            () => expect(URL.createObjectURL).toHaveBeenCalled(),
+            { timeout: 4000 }
+        );
 
         unmount();
-        expect(window.URL.revokeObjectURL).toHaveBeenCalled();
+        expect(URL.revokeObjectURL).toHaveBeenCalled();
     });
 });
